@@ -1063,61 +1063,181 @@ const Navbar: React.FC<{ onAuth: (mode: AuthMode) => void; isAuthPage?: boolean;
   );
 };
 
+import { motion } from 'framer-motion';
+
 const HeroSection: React.FC<{ onAuth: (mode: AuthMode) => void; onDemo: () => void }> = ({ onAuth, onDemo }) => {
-  const [ref, isVisible] = useIntersectionObserver();
-
   return (
-    <section ref={ref as any} className={`bg-dots py-20 px-4 animate-reveal ${isVisible ? 'visible' : ''}`}>
-      <div className="container mx-auto flex flex-col items-center justify-center text-center">
-        <div className="text-5xl mb-6 animate-bounce-gentle">🎓</div>
+    <section className="bg-dots py-20 px-4 min-h-screen flex items-center relative overflow-hidden">
+      <div className="container mx-auto max-w-7xl relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
 
-        <WindowBox className="max-w-4xl shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] p-0">
-          <div className="border-b-4 border-black p-8 md:p-12">
-            <div className="bg-white border-4 border-black p-8 inline-block shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] mb-8 transform -rotate-1">
-              <p className="text-2xl md:text-3xl font-black uppercase text-left leading-tight">
-                WE USE TOO MANY DAMN<br />
-                BOOKS.<br /><br />
-                LET'S JUST NOT.
-              </p>
-            </div>
+          {/* Left Column: Content */}
+          <div className="text-left space-y-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="inline-block"
+            >
+              <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform -rotate-1 inline-block">
+                <p className="text-xl md:text-2xl font-black uppercase leading-tight">
+                  <span className="bg-gray-200 px-1">WE USE</span> TOO MANY DAMN<br />
+                  <span className="bg-gray-200 px-1">BOOKS.</span> LET'S JUST NOT.
+                </p>
+              </div>
+            </motion.div>
 
-            <h1 className="text-4xl md:text-6xl font-black mb-6 leading-none tracking-tighter uppercase">
-              ACE YOUR EXAMS WITH<br />AI-POWERED PREPARATION
-            </h1>
+            <motion.h1
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+              className="text-5xl md:text-7xl font-black leading-[0.9] tracking-tighter uppercase"
+            >
+              ACE YOUR EXAMS WITH<br />
+              <span className="text-stroke-2 text-transparent bg-clip-text bg-black">AI-POWERED</span><br />
+              PREPARATION
+            </motion.h1>
 
-            <div className="flex flex-col items-center justify-center mb-8">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="flex items-center gap-4"
+            >
+              <div className="h-2 w-12 bg-black"></div>
               <span className="text-xl font-bold uppercase tracking-widest bg-black text-white px-4 py-1">FOR MIT-ADT STUDENTS</span>
-              <div className="w-48 h-1 bg-black mt-1"></div>
-            </div>
+            </motion.div>
 
-            <div className="flex flex-wrap justify-center gap-6 mb-10 text-lg md:text-xl font-black uppercase tracking-wider">
-              <span className="flex items-center gap-2">✓ 500+ PYQs Organized</span>
-              <span className="flex items-center gap-2">✓ AI Mock Tests</span>
-              <span className="flex items-center gap-2">✓ Study Plans</span>
-            </div>
+            <motion.div
+              className="flex flex-wrap gap-3"
+              initial="hidden"
+              animate="visible"
+              variants={{
+                hidden: { opacity: 0 },
+                visible: {
+                  opacity: 1,
+                  transition: { staggerChildren: 0.1 }
+                }
+              }}
+            >
+              {['500+ PYQS ORGANIZED', 'AI MOCK TESTS', 'STUDY PLANS'].map((tag, i) => (
+                <motion.span
+                  key={i}
+                  variants={{ hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0 } }}
+                  className="border-2 border-black px-4 py-2 font-black uppercase rounded-full hover:bg-black hover:text-white transition-colors cursor-pointer text-sm"
+                >
+                  {tag}
+                </motion.span>
+              ))}
+            </motion.div>
 
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <button onClick={() => onAuth('signup')} className="retro-btn bg-black text-white py-4 px-8 md:py-5 md:px-10 text-xl md:text-2xl font-black border-4 border-black hover:bg-gray-900 flex items-center justify-center gap-2 glitch-hover">
-                ORGANIZE MY CHAOS <ChevronRight />
-              </button>
-              <button onClick={onDemo} className="retro-btn bg-white text-black py-4 px-8 md:py-5 md:px-10 text-xl md:text-2xl font-black border-4 border-black hover:bg-black hover:text-white transition-colors bg-stripes flex items-center gap-2">
-                TRY DEMO NOW <CheckCircle2 size={24} />
-              </button>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="flex flex-col sm:flex-row gap-4 pt-4"
+            >
+              <motion.button
+                whileHover={{ scale: 1.05, x: 5 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => onAuth('signup')}
+                className="bg-black text-white py-4 px-8 text-xl font-black border-4 border-black hover:bg-white hover:text-black transition-all flex items-center justify-center gap-3 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.2)]"
+              >
+                ORGANIZE MY CHAOS <ArrowRight strokeWidth={3} />
+              </motion.button>
+
+              <div className="relative group">
+                <button onClick={onDemo} className="bg-white text-black py-4 px-8 text-xl font-black border-4 border-black hover:bg-gray-50 transition-colors bg-stripes flex items-center gap-2 group-hover:translate-x-1 group-hover:translate-y-1 transition-transform">
+                  TRY DEMO NOW
+                </button>
+                <div className="absolute top-full left-0 w-full text-center mt-2 opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold uppercase text-gray-500">No Sign-up Required</div>
+              </div>
+            </motion.div>
           </div>
-        </WindowBox>
+
+          {/* Right Column: Stats & Visuals */}
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+            className="relative hidden lg:block"
+          >
+            {/* Brutalist Decorative Elements */}
+            <div className="absolute -top-10 -right-10 w-32 h-32 border-4 border-black bg-yellow-300 z-0"></div>
+            <div className="absolute top-1/2 -left-12 w-24 h-24 bg-gray-200 rounded-full border-4 border-black z-0"></div>
+
+            <div className="bg-white border-4 border-black p-8 shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] relative z-10 w-full max-w-md mx-auto">
+              <div className="flex justify-between items-center border-b-4 border-black pb-4 mb-6">
+                <span className="font-black uppercase text-xl">LIVE STATS</span>
+                <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="flex justify-between items-end">
+                  <div>
+                    <div className="text-gray-500 font-bold uppercase text-xs mb-1">PYQs Available</div>
+                    <div className="text-5xl font-black tracking-tighter">500+</div>
+                  </div>
+                  <BookOpen size={32} strokeWidth={2.5} />
+                </div>
+
+                <div className="w-full bg-gray-200 h-4 border-2 border-black rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: "85%" }}
+                    transition={{ duration: 1.5, ease: "easeOut" }}
+                    className="h-full bg-black"
+                  ></motion.div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t-4 border-black">
+                  <div>
+                    <div className="text-gray-500 font-bold uppercase text-xs">Active Students</div>
+                    <div className="text-3xl font-black">1.2K</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500 font-bold uppercase text-xs">Daily Tests</div>
+                    <div className="text-3xl font-black">89</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Floating Paper Card Decoration */}
+            <motion.div
+              animate={{ y: [0, -10, 0] }}
+              transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+              className="absolute -bottom-8 -right-4 bg-white border-4 border-black p-4 w-40 shadow-lg rotate-6 z-20"
+            >
+              <div className="w-8 h-8 bg-black mb-2 flex items-center justify-center text-white font-bold">A+</div>
+              <div className="h-2 w-full bg-gray-200 mb-1"></div>
+              <div className="h-2 w-2/3 bg-gray-200"></div>
+            </motion.div>
+          </motion.div>
+
+        </div>
       </div>
     </section>
   );
 };
 
 const ProblemSection: React.FC = () => {
-  const [ref, isVisible] = useIntersectionObserver();
-
   return (
-    <section ref={ref as any} className={`py-24 bg-white animate-reveal ${isVisible ? 'visible' : ''}`}>
+    <motion.section
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 0.8 }}
+      className="py-24 bg-white"
+    >
       <div className="container mx-auto px-4 max-w-4xl">
-        <div className="border-4 border-black p-8 md:p-12 relative bg-white shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+        <motion.div
+          initial={{ y: 50 }}
+          whileInView={{ y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="border-4 border-black p-8 md:p-12 relative bg-white shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]"
+        >
           <div className="flex items-center gap-3 mb-8">
             <span className="text-3xl">⚠</span>
             <span className="text-lg font-bold uppercase tracking-[0.3em] bg-black text-white px-2">THE BAD NEWS</span>
@@ -1140,96 +1260,164 @@ const ProblemSection: React.FC = () => {
                 "Wasting hours organizing instead of studying",
                 "No way to test if you're exam-ready"
               ].map((item, i) => (
-                <li key={i} className={`flex items-start gap-4 text-lg font-bold uppercase transition-all duration-500 delay-[${i * 100}ms] ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
+                <motion.li
+                  key={i}
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="flex items-start gap-4 text-lg font-bold uppercase"
+                >
                   <div className="w-3 h-3 bg-black mt-2 flex-shrink-0"></div>
                   {item}
-                </li>
+                </motion.li>
               ))}
             </ul>
           </div>
 
           <div className="text-center">
-            <span className="text-4xl block mb-2">↓</span>
+            <motion.span
+              animate={{ y: [0, 10, 0] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+              className="text-4xl block mb-2"
+            >
+              ↓
+            </motion.span>
             <p className="text-2xl font-black uppercase bg-black text-white inline-block px-4 py-2 transform -rotate-1">
               EASILY REPLACED WITH SANKALAN
             </p>
           </div>
+        </motion.div>
+      </div>
+    </motion.section>
+  );
+};
+
+const SolutionSection: React.FC = () => {
+  const features = [
+    { icon: "📚", title: "500+ PYQS", desc: "Organized by Branch & Sem" },
+    { icon: "🤖", title: "AI MOCK TESTS", desc: "Real exam patterns generated" },
+    { icon: "📊", title: "STUDY PLANS", desc: "Custom schedules for you" },
+    { icon: "👥", title: "STUDY ROOMS", desc: "Collaborate with peers" },
+    { icon: "🔥", title: "15-DAY STREAK", desc: "Track consistency daily" },
+    { icon: "⚡", title: "REAL-TIME SEARCH", desc: "Find any topic instantly" }
+  ];
+
+  return (
+    <section className="py-24 bg-white relative">
+      <div className="container mx-auto px-4 max-w-6xl">
+        <div className="flex items-center gap-3 mb-12 justify-center">
+          <Lightbulb size={32} />
+          <span className="text-sm font-bold uppercase tracking-[0.3em]">THE ARSENAL</span>
         </div>
+
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: { staggerChildren: 0.1 }
+            }
+          }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+        >
+          {features.map((item, i) => (
+            <motion.div
+              key={i}
+              variants={{
+                hidden: { opacity: 0, y: 50 },
+                visible: { opacity: 1, y: 0 }
+              }}
+              whileHover={{ y: -8, boxShadow: "12px 12px 0px 0px rgba(0,0,0,1)" }}
+              className="group bg-white border-4 border-black p-8 flex flex-col items-center text-center gap-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 hover:bg-black hover:text-white cursor-pointer"
+            >
+              <div className="text-6xl mb-2 group-hover:scale-110 transition-transform duration-300">{item.icon}</div>
+              <h3 className="text-2xl font-black uppercase tracking-tighter leading-none">{item.title}</h3>
+              <div className="h-1 w-12 bg-black group-hover:bg-white transition-colors"></div>
+              <p className="text-sm font-bold uppercase leading-relaxed opacity-70 group-hover:opacity-100">{item.desc}</p>
+            </motion.div>
+          ))}
+        </motion.div>
       </div>
     </section>
   );
 };
 
-const SolutionSection: React.FC = () => (
-  <section className="py-24 bg-white">
-    <div className="container mx-auto px-4 max-w-5xl">
-      <div className="flex items-center gap-3 mb-6">
-        <Lightbulb size={32} />
-        <span className="text-sm font-bold uppercase tracking-[0.3em]">The Good News</span>
-      </div>
-      <div className="bg-black text-white p-4 inline-block mb-10">
-        <h2 className="text-4xl font-black uppercase tracking-tighter">It doesn't have to be a mess!</h2>
-      </div>
-      <p className="text-2xl font-bold mb-12 uppercase">Connect with Sankalan instead.</p>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 border-4 border-black">
-        {[
-          { icon: "📚", title: "Non-Modal PYQs", desc: "500+ PYQs organized by branch, semester, and subject." },
-          { icon: "🤖", title: "AI Generation", desc: "Smart generated practice questions based on real exam patterns." },
-          { icon: "📊", title: "Smart Analytics", desc: "Topic prioritization based on frequent exam appearances." }
-        ].map((item, i) => (
-          <div key={i} className="border-r-4 border-black last:border-r-0 p-12 flex flex-col items-center text-center gap-8 hover:bg-gray-50 transition-colors">
-            <div className="text-8xl mb-2">{item.icon}</div>
-            <h3 className="text-3xl font-black uppercase tracking-tighter">{item.title}</h3>
-            <p className="text-sm font-bold uppercase leading-relaxed opacity-70">{item.desc}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  </section>
-);
-
 
 const HowItWorks: React.FC = () => {
-  const [ref, isVisible] = useIntersectionObserver();
-
   return (
-    <section ref={ref as any} className={`py-24 bg-dots px-4 animate-reveal ${isVisible ? 'visible' : ''}`}>
+    <section className="py-24 bg-dots px-4">
       <div className="container mx-auto max-w-6xl">
         <div className="mb-12 text-center md:text-left">
-          <h2 className="text-4xl font-black uppercase tracking-tighter flex items-center gap-4 justify-center md:justify-start">
+          <motion.h2
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="text-4xl font-black uppercase tracking-tighter flex items-center gap-4 justify-center md:justify-start"
+          >
             <span className="text-4xl">⚡</span> HOW SANKALAN WORKS
-          </h2>
+          </motion.h2>
           <div className="h-1 bg-black w-full max-w-xs mt-2 mx-auto md:mx-0"></div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          variants={{
+            hidden: { opacity: 0 },
+            visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+          }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8"
+        >
           {[
             { num: '1', title: 'SIGN UP', sub: 'Google Auth in 30 sec' },
             { num: '2', title: 'SELECT', sub: 'Branch & Sem (CSE,S5)' },
             { num: '3', title: 'ACCESS', sub: '500+ PYQs organized' }
           ].map((step, i) => (
-            <div key={i} className="bg-white border-4 border-black p-8 flex flex-col items-center text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-2 transition-transform duration-300">
+            <motion.div
+              key={i}
+              variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+              whileHover={{ y: -5 }}
+              className="bg-white border-4 border-black p-8 flex flex-col items-center text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] cursor-default"
+            >
               <span className="text-4xl font-black mb-2">{step.num}</span>
               <h3 className="text-xl font-black uppercase mb-2">{step.title}</h3>
               <p className="text-sm text-gray-600 font-bold uppercase">{step.sub}</p>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          variants={{
+            hidden: { opacity: 0 },
+            visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.3 } }
+          }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-8"
+        >
           {[
             { num: '4', title: 'PRACTICE', sub: 'AI calculates tests' },
             { num: '5', title: 'IMPROVE', sub: 'Track weak topics' },
             { num: '6', title: 'ACE EXAMS', sub: '95% success rate' }
           ].map((step, i) => (
-            <div key={i} className="bg-white border-4 border-black p-8 flex flex-col items-center text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-2 transition-transform duration-300">
+            <motion.div
+              key={i}
+              variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+              whileHover={{ y: -5 }}
+              className="bg-white border-4 border-black p-8 flex flex-col items-center text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] cursor-default"
+            >
               <span className="text-4xl font-black mb-2">{step.num}</span>
               <h3 className="text-xl font-black uppercase mb-2">{step.title}</h3>
               <p className="text-sm text-gray-600 font-bold uppercase">{step.sub}</p>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
@@ -1246,7 +1434,16 @@ const FeaturesGrid: React.FC = () => (
         <h2 className="text-4xl font-black uppercase tracking-tighter">Academic Preparation Done Right</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 border-4 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-50px" }}
+        variants={{
+          hidden: { opacity: 0 },
+          visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+        }}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 border-4 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]"
+      >
         {[
           { icon: <Target />, title: "DO: Easy Filter", desc: "Find any paper in 2 clicks. Filter by year, sem, or difficulty." },
           { icon: <Zap />, title: "DO: Single Purpose", desc: "No fluff. Just the resources you need to pass the exam." },
@@ -1255,7 +1452,11 @@ const FeaturesGrid: React.FC = () => (
           { icon: <Cpu />, title: "DO: AI Prediction", desc: "Leverage patterns to see what's coming next." },
           { icon: <Users />, title: "DO: Verified", desc: "Crowd-sourced solutions verified by top students." }
         ].map((item, i) => (
-          <div key={i} className="p-8 border-b-4 border-black last:border-b-0 md:even:border-l-4 lg:even:border-l-0 lg:[&:nth-child(3n+2)]:border-l-4 lg:[&:nth-child(3n)]:border-l-4 group hover:bg-gray-50 transition-colors">
+          <motion.div
+            key={i}
+            variants={{ hidden: { opacity: 0, opacity: 0 }, visible: { opacity: 1, opacity: 1 } }}
+            className="p-8 border-b-4 border-black last:border-b-0 md:even:border-l-4 lg:even:border-l-0 lg:[&:nth-child(3n+2)]:border-l-4 lg:[&:nth-child(3n)]:border-l-4 group hover:bg-gray-50 transition-colors"
+          >
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 border-2 border-black group-hover:rotate-12 transition-transform">
                 {item.icon}
@@ -1263,9 +1464,9 @@ const FeaturesGrid: React.FC = () => (
               <h4 className="text-xl font-black uppercase tracking-tighter">{item.title}</h4>
             </div>
             <p className="text-xs font-bold uppercase leading-relaxed opacity-70">{item.desc}</p>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </div>
   </section>
 );
