@@ -52,6 +52,7 @@ import StudyRooms from './src/components/StudyRooms';
 import LiveRoom from './src/components/LiveRoom';
 import useSound from './src/hooks/useSound';
 import { useIntersectionObserver, useCountUp } from './src/hooks/useLandingAnimations';
+import Loader from './src/components/Loader';
 
 // --- Types ---
 type View = 'landing' | 'auth' | 'onboarding' | 'dashboard' | 'pyqs' | 'materials' | 'tools' | 'about' | 'profile' | 'settings' | 'study-rooms' | 'live-room' | 'admin-dashboard';
@@ -1548,13 +1549,13 @@ const Footer: React.FC = () => (
   </footer>
 );
 
-
 export default function App() {
-  const { user, isLoaded, isSignedIn } = useUser();
+  const [isLoading, setIsLoading] = useState(true); // Custom loader active
+  const { isLoaded, isSignedIn, user } = useUser();
   const { signOut } = useClerk();
   const [view, setView] = useState<View>('landing');
-
   const [authMode, setAuthMode] = useState<AuthMode>('signin');
+
   const [profile, setProfile] = useState<UserProfile>({
     name: 'Guest',
     branch: '',
@@ -1562,6 +1563,9 @@ export default function App() {
     semester: '',
     role: 'student'
   });
+
+  const [globalProfileOpen, setGlobalProfileOpen] = useState(false);
+  const [globalNotifOpen, setGlobalNotifOpen] = useState(false);
 
   // Redirect to dashboard ONLY if we are in a "public" view (landing/auth)
   // This prevents the loop if we are intentionally logging out (though signOut clears isSignedIn)
@@ -1584,8 +1588,23 @@ export default function App() {
     }
   }, [isLoaded, isSignedIn, user, view, profile.branch, profile.year, profile.semester]);
 
-  const [globalProfileOpen, setGlobalProfileOpen] = useState(false);
-  const [globalNotifOpen, setGlobalNotifOpen] = useState(false);
+  // Handle Loader completion
+  const handleLoaderComplete = () => {
+    setIsLoading(false);
+  };
+
+  if (isLoading) {
+    return <Loader onComplete={handleLoaderComplete} />;
+  }
+
+  // Show normal app content only after loader
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
+      </div>
+    );
+  }
 
   const navigateToAuth = (mode: AuthMode) => {
     setAuthMode(mode);
