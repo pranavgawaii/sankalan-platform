@@ -2,148 +2,161 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Loader: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
+    const [phase, setPhase] = useState<'falling' | 'content' | 'complete'>('falling');
     const [progress, setProgress] = useState(0);
-    const [textIndex, setTextIndex] = useState(0);
-    const [isReady, setIsReady] = useState(false);
-
-    const loadingTexts = [
-        "LOADING YOUR CHAOS",
-        "ORGANIZING PYQs",
-        "POWERING AI TOOLS",
-        "PREPPING MOCK TESTS",
-        "BUILDING STUDY ROOMS",
-        "ALMOST THERE"
-    ];
 
     const letters = "SANKALAN".split("");
 
+    // Animation timeline
     useEffect(() => {
-        // Text rotation logic
-        const textInterval = setInterval(() => {
-            setTextIndex(prev => (prev + 1) % loadingTexts.length);
-        }, 800);
+        // Phase 1: Falling Blocks -> Content Reveal (1.2s)
+        const timer1 = setTimeout(() => setPhase('content'), 1200);
 
-        // Progress bar logic
-        const duration = 2500; // 2.5 seconds minimum load
-        const interval = 20;
-        const steps = duration / interval;
-        const increment = 100 / steps;
-
-        const progressTimer = setInterval(() => {
-            setProgress(prev => {
-                if (prev >= 100) {
-                    clearInterval(progressTimer);
-                    setIsReady(true);
-                    return 100;
-                }
-                return Math.min(prev + increment, 100);
-            });
-        }, interval);
-
-        return () => {
-            clearInterval(textInterval);
-            clearInterval(progressTimer);
-        };
+        return () => clearTimeout(timer1);
     }, []);
 
+    // Progress Bar Logic
     useEffect(() => {
-        if (isReady) {
+        if (phase === 'content') {
+            const interval = setInterval(() => {
+                setProgress(prev => {
+                    if (prev >= 100) {
+                        clearInterval(interval);
+                        setTimeout(() => setPhase('complete'), 500);
+                        return 100;
+                    }
+                    return prev + 2;
+                });
+            }, 30);
+            return () => clearInterval(interval);
+        }
+    }, [phase]);
+
+    // Exit Logic
+    useEffect(() => {
+        if (phase === 'complete') {
             const timer = setTimeout(() => {
                 onComplete();
-            }, 1000); // Wait 1s after ready before unmounting/exiting
+            }, 600);
             return () => clearTimeout(timer);
         }
-    }, [isReady, onComplete]);
+    }, [phase, onComplete]);
 
     return (
         <motion.div
-            className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden pointer-events-none"
+            className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden bg-white"
         >
-            {/* Split Screen Backgrounds */}
-            <motion.div
-                className="absolute top-0 left-0 w-full h-1/2 bg-white border-b-2 border-black z-0"
-                initial={{ y: 0 }}
-                animate={isReady ? { y: "-100%" } : { y: 0 }}
-                transition={{ duration: 0.8, ease: [0.6, 0.0, 0.2, 1], delay: 0.2 }}
-            />
-            <motion.div
-                className="absolute bottom-0 left-0 w-full h-1/2 bg-white border-t-2 border-black z-0"
-                initial={{ y: 0 }}
-                animate={isReady ? { y: "100%" } : { y: 0 }}
-                transition={{ duration: 0.8, ease: [0.6, 0.0, 0.2, 1], delay: 0.2 }}
+            {/* Grid Pattern Background */}
+            <div className="absolute inset-0 opacity-10 pointer-events-none"
+                style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '24px 24px' }}
             />
 
-            {/* Floating Shapes - Inside Backgrounds? No, keep separate or duplicate?
-          To keep it simple, let's put them inside the background divs or just fade them out
-      */}
+            {/* Content Container */}
+            <div className="relative flex flex-col items-center z-10 w-full max-w-4xl px-4">
 
-            <motion.div
-                className="relative z-10 flex flex-col items-center w-full max-w-lg px-4"
-                animate={isReady ? { opacity: 0, scale: 0.9 } : { opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3 }}
-            >
-                {/* Stacking Blocks Logo Animation */}
-                <div className="flex gap-1 md:gap-2 mb-12 h-20 items-end justify-center">
+                {/* Falling Blocks */}
+                <div className="flex gap-2 md:gap-4 mb-12 overflow-hidden h-24 items-end">
                     {letters.map((char, i) => (
                         <motion.div
                             key={i}
-                            custom={i}
                             initial={{ y: -400, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{
-                                type: "spring",
-                                damping: 12,
-                                stiffness: 200,
-                                delay: i * 0.1
-                            }}
-                            className="w-8 md:w-12 aspect-square bg-black flex items-center justify-center"
+                            animate={phase !== 'complete' ? { y: 0, opacity: 1 } : { y: 100, opacity: 0 }}
+                            transition={phase !== 'complete'
+                                ? {
+                                    type: "spring",
+                                    damping: 15,
+                                    stiffness: 200,
+                                    delay: i * 0.1 // Staggered fall
+                                }
+                                : { duration: 0.3, delay: i * 0.05 } // Staggered exit
+                            }
+                            whileHover={{ scale: 1.1, rotate: 5, backgroundColor: "#000", color: "#FFF", y: -5 }}
+                            whileTap={{ scale: 0.9 }}
+                            className="w-10 h-10 md:w-16 md:h-16 lg:w-20 lg:h-20 flex items-center justify-center font-black text-xl md:text-3xl lg:text-4xl font-mono border-4 border-black bg-white text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-pointer select-none"
                         >
-                            <span className="text-white font-black text-xl md:text-3xl font-mono">{char}</span>
+                            {char}
                         </motion.div>
                     ))}
                 </div>
 
-                {/* Brand Name Box */}
-                <motion.div
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: 1 }}
-                    transition={{ delay: 1, duration: 0.5 }}
-                    className="border-4 border-black px-8 py-4 bg-white mb-8"
-                >
-                    <h1 className="text-4xl md:text-5xl font-black tracking-tight font-mono">SANKALAN</h1>
-                </motion.div>
-
-                {/* Rotating Status Text */}
-                <div className="h-8 mb-8 overflow-hidden relative w-full text-center">
-                    <AnimatePresence mode="wait">
-                        <motion.p
-                            key={textIndex}
-                            initial={{ y: 20, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            exit={{ y: -20, opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="text-sm md:text-base font-bold font-mono uppercase tracking-widest absolute w-full left-0 font-mono"
+                {/* Tagline & Progress (Reveals after blocks land) */}
+                <AnimatePresence>
+                    {(phase === 'content' || phase === 'complete') && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={phase === 'content' ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                            exit={{ opacity: 0, y: 20 }}
+                            transition={{ duration: 0.5 }}
+                            className="flex flex-col items-center w-full"
                         >
-                            {isReady ? "READY!" : loadingTexts[textIndex]}
-                        </motion.p>
-                    </AnimatePresence>
-                </div>
+                            {/* Tagline */}
+                            <div className="text-center mb-12 h-8">
+                                <h2 className="text-lg md:text-2xl font-black font-mono tracking-[0.2em] uppercase text-black">
+                                    <ScrambleText text="EXAM PREP • REIMAGINED" />
+                                </h2>
+                            </div>
 
-                {/* Progress Bar */}
-                <div className="w-full h-12 border-4 border-black p-1 relative bg-white">
-                    <motion.div
-                        className="h-full bg-black"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${progress}%` }}
-                        transition={{ ease: "linear", duration: 0.1 }}
-                    />
-                </div>
-                <div className="w-full text-right mt-2 font-mono font-bold text-lg">
-                    {Math.round(progress)}%
-                </div>
-            </motion.div>
+                            {/* Progress Bar */}
+                            <div className="flex gap-2 mb-16">
+                                {[...Array(12)].map((_, i) => (
+                                    <motion.div
+                                        key={i}
+                                        initial={{ scale: 0, opacity: 0 }}
+                                        animate={{
+                                            scale: 1,
+                                            opacity: 1,
+                                            backgroundColor: progress > (i * (100 / 12)) ? '#000000' : '#FFFFFF'
+                                        }}
+                                        transition={{ delay: i * 0.05 }}
+                                        className="w-6 h-6 md:w-10 md:h-10 border-4 border-black box-border"
+                                    />
+                                ))}
+                            </div>
+
+                            {/* Credits */}
+                            <div className="text-center space-y-2">
+                                <p className="text-sm font-mono text-gray-500 font-bold uppercase tracking-widest">Built by Pranav Gawai</p>
+                                <p className="text-xs font-mono text-gray-400 font-bold uppercase tracking-widest">MIT-ADT CSE</p>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
         </motion.div>
     );
+};
+
+// Scramble Text Component
+const ScrambleText: React.FC<{ text: string, delay?: number }> = ({ text, delay = 40 }) => {
+    const [displayedText, setDisplayedText] = useState("");
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890@#$%&";
+
+    useEffect(() => {
+        let iteration = 0;
+        const interval = setInterval(() => {
+            setDisplayedText(prev =>
+                text
+                    .split("")
+                    .map((letter, index) => {
+                        if (index < iteration) {
+                            return text[index];
+                        }
+                        return chars[Math.floor(Math.random() * chars.length)];
+                    })
+                    .join("")
+            );
+
+            if (iteration >= text.length) {
+                clearInterval(interval);
+            }
+
+            iteration += 1 / 3;
+        }, delay / 2);
+
+        return () => clearInterval(interval);
+    }, [text, delay]);
+
+    return <span>{displayedText}</span>;
 };
 
 export default Loader;
