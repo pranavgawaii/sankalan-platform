@@ -1,82 +1,97 @@
-# Sankalan Platform 🎓
+# SANKALAN.
 
-> **We Kill Chaos.** The one-stop arsenal for every engineer at MIT-ADT.
-
-Sankalan is a modern, student-centric academic platform designed to replace scattered WhatsApp notes and last-minute panic with a structured, AI-powered study ecosystem. Built specifically for MIT-ADT students, it organizes Previous Year Questions (PYQs), study materials, and offers smart analytics to help you ace your exams.
+> **WE KILL CHAOS.** THE ARSENAL FOR MIT-ADT ENGINEERS.
 
 ![Sankalan Platform Preview](https://github.com/pranavgawaii/sankalan-platform/blob/main/public/og-image.png?raw=true)
 
-## ⚡ Features
+---
 
--   **📚 500+ PYQs Organized**: Browse previous year papers filtered by Branch, Year, Semester, and Exam Type (TA1, TA2, End Sem).
--   **🤖 AI Mock Tests**: Generate custom quizzes based on real exam patterns to test your readiness.
--   **📊 Smart Analytics**: Track your progress and identify weak topics with visual insights.
--   **🔐 Secure & Private**: Authentication via Clerk. No tracking, no ads, privacy-first design.
--   **📱 Mobile First**: Fully responsive design optimized for studying on the go.
--   **🎨 Neo-Brutalist Design**: A distinct, high-energy UI that makes studying less boring.
+### 🛑 THE PROBLEM
+**EXAMS ARE THE CRUTCH OF THE INARTICULATE STUDENT.**
+*   PYQs scattered across 10+ WhatsApp groups.
+*   Zero organization by subject or semester.
+*   Wasting hours just *finding* what to study.
 
-## 🛠️ Tech Stack
-
--   **Frontend**: React, TypeScript, Vite
--   **Styling**: Tailwind CSS
--   **Authentication**: Clerk
--   **Icons**: Lucide React
--   **State/Logic**: Custom Hooks & Context API
--   **Deployment**: Vercel / Netlify (Ready)
-
-## 🚀 Getting Started
-
-Follow these steps to set up the project locally.
-
-### Prerequisites
-
--   Node.js (v18 or higher)
--   npm or yarn
-
-### Installation
-
-1.  **Clone the repository**
-    ```bash
-    git clone https://github.com/pranavgawaii/sankalan-platform.git
-    cd sankalan-platform
-    ```
-
-2.  **Install dependencies**
-    ```bash
-    npm install
-    ```
-
-3.  **Environment Setup**
-    Create a `.env.local` file in the root directory and add your Clerk keys:
-    ```env
-    VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
-    ```
-
-4.  **Run the development server**
-    ```bash
-    npm run dev
-    ```
-    Open [http://localhost:3003](http://localhost:3003) to view it in the browser.
-
-## 🤝 Contribution
-
-This project is open source and built by students, for students.
-1.  Fork the Project
-2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the Branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
-
-## 📝 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-
-## 👤 Author
-
-**Pranav Gawai**
--   Twitter: [@pranavgawai_](https://x.com/pranavgawai_)
--   LinkedIn: [pranavgawai](https://www.linkedin.com/in/pranavgawai/)
--   GitHub: [pranavgawaii](https://github.com/pranavgawaii)
+### ⚡ THE SOLUTION
+**SANKALAN.** A structured, AI-powered ecosystem designed to replace last-minute panic with raw efficiency. No ads. No tracking. Just pure utility.
 
 ---
-*Built with ♥ for MIT-ADT Students.*
+
+## 🛠️ ARSENAL (FEATURES)
+
+| FEATURE | DESCRIPTION |
+| :--- | :--- |
+| **📚 500+ PYQS** | Filter by **Branch**, **Year**, **Semester**, and **Exam Type** (TA1, TA2, End Sem). |
+| **🤖 AI MOCK TESTS** | Generate custom quizzes based on *real* exam patterns. Test your readiness. |
+| **📊 ANALYTICS** | Track your progress. Visual insights on weak topics. Stop guessing. |
+| **🔐 PRIVACY 1ST** | Authentication via Clerk. We don't sell your data. We don't show ads. |
+| **📱 MOBILE READY** | Optimized for cramming on the bus. |
+| **🎨 NEO-BRUTALISM** | High-energy UI. Because studying shouldn't be boring. |
+
+---
+
+## 🏗️ BUILD STACK
+
+We trust reliable tech.
+*   **CORE:** React + TypeScript + Vite
+*   **STYLE:** Tailwind CSS (Neo-Brutalist Config)
+*   **AUTH:** Clerk
+*   **STATE:** Custom Hooks + Context API
+*   **ICONS:** Lucide React
+
+---
+
+## 🚀 DEPLOYMENT PROTOCOL
+
+Run this locally. Don't break things.
+
+### 0. PREREQUISITES
+*   Node.js (v18+)
+*   npm / yarn
+
+### 1. CLONE THE REPO
+```bash
+git clone https://github.com/pranavgawaii/sankalan-platform.git
+cd sankalan-platform
+```
+
+### 2. INSTALL DEPENDENCIES
+```bash
+npm install
+```
+
+### 3. CONFIGURE SECRETS
+Create a `.env.local` file. Do not commit this.
+```env
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
+```
+
+### 4. INITIATE LAUNCH
+```bash
+npm run dev
+```
+Open [http://localhost:3003](http://localhost:3003).
+
+---
+
+## 🤝 JOIN THE CHAOS (CONTRIBUTE)
+
+Built by students, for students.
+1.  **Fork** the Project
+2.  **Branch** it (`git checkout -b feature/ChaosMode`)
+3.  **Commit** it (`git commit -m 'Added more features'`)
+4.  **Push** it (`git push origin feature/ChaosMode`)
+5.  **Open** a Pull Request
+
+---
+
+## 👤 THE BUILDER
+
+**Pranav Gawai**
+*   [X (Twitter)](https://x.com/pranavgawai_)
+*   [LinkedIn](https://www.linkedin.com/in/pranavgawai/)
+*   [GitHub](https://github.com/pranavgawaii)
+
+---
+
+*Made with ♥ (and caffeine) for MIT-ADT Students.*
