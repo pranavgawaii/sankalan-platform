@@ -1094,7 +1094,7 @@ import { motion } from 'framer-motion';
 
 const HeroSection: React.FC<{ onAuth: (mode: AuthMode) => void; onDemo: () => void }> = ({ onAuth, onDemo }) => {
   return (
-    <section className="bg-dots py-20 px-4 min-h-screen flex items-center relative overflow-hidden">
+    <section className="bg-dots pt-16 pb-20 px-4 min-h-screen flex relative overflow-hidden">
       <div className="container mx-auto max-w-7xl relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
 
@@ -1162,7 +1162,7 @@ const HeroSection: React.FC<{ onAuth: (mode: AuthMode) => void; onDemo: () => vo
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="flex flex-col sm:flex-row gap-4 pt-4"
+              className="flex flex-col sm:flex-row gap-4 -mt-4"
             >
               <motion.button
                 whileHover={{ scale: 1.05, x: 5 }}
@@ -1202,8 +1202,8 @@ const HeroSection: React.FC<{ onAuth: (mode: AuthMode) => void; onDemo: () => vo
               <div className="space-y-6">
                 <div className="flex justify-between items-end">
                   <div>
-                    <div className="text-gray-500 font-bold uppercase text-xs mb-1">PYQs Available</div>
-                    <div className="text-5xl font-black tracking-tighter">500+</div>
+                    <div className="text-gray-500 font-bold uppercase text-xs mb-1">Total Resources</div>
+                    <div className="text-5xl font-black tracking-tighter">2.5K+</div>
                   </div>
                   <BookOpen size={32} strokeWidth={2.5} />
                 </div>
@@ -1223,8 +1223,8 @@ const HeroSection: React.FC<{ onAuth: (mode: AuthMode) => void; onDemo: () => vo
                     <div className="text-3xl font-black">1.2K</div>
                   </div>
                   <div>
-                    <div className="text-gray-500 font-bold uppercase text-xs">Daily Tests</div>
-                    <div className="text-3xl font-black">89</div>
+                    <div className="text-gray-500 font-bold uppercase text-xs">Lecture Notes</div>
+                    <div className="text-3xl font-black">300+</div>
                   </div>
                 </div>
               </div>

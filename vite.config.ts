@@ -7,9 +7,13 @@ export default defineConfig(({ mode }) => {
   return {
     server: {
       port: 3003,
+      strictPort: true,
+      host: true,
     },
     preview: {
       port: 3003,
+      strictPort: true,
+      host: true,
     },
     plugins: [react()],
     define: {
