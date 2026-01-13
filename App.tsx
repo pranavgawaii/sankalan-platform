@@ -38,7 +38,8 @@ import {
   ExternalLink,
   Filter,
   Volume2,
-  VolumeX
+  VolumeX,
+  Headphones
 } from 'lucide-react';
 import { useSoundContext } from './src/context/SoundContext';
 
@@ -501,26 +502,6 @@ const DashboardView: React.FC<{
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
-  const stats = [
-    { value: 25, label: 'PYQs VIEWED' },
-    { value: 8, label: 'TESTS TAKEN' },
-    { value: 15, label: 'DAYS STREAK' }
-  ];
-
-  const actions = [
-    { icon: '📚', title: 'BROWSE PYQS', desc: '500+ papers organized', id: 'pyqs' },
-    { icon: '🤖', title: 'AI MOCK TEST', desc: 'Generate custom quiz', id: 'tools' },
-    { icon: '🎧', title: 'STUDY ROOMS', desc: 'Join live sessions', id: 'study-rooms' },
-    { icon: '📊', title: 'MY PROGRESS', desc: 'View detailed analytics', id: 'progress' },
-    { icon: '📝', title: 'STUDY MATERIALS', desc: 'Notes & subject slides', id: 'materials' }
-  ];
-
-  const activity = [
-    { text: 'Viewed DBMS Endsem 2024', time: '2 hours ago' },
-    { text: 'Completed AI Mock Test (85%)', time: 'Yesterday' },
-    { text: 'Downloaded CN Unit 3 Notes', time: '3 days ago' }
-  ];
-
   return (
     <div className="min-h-screen bg-[#F5F5F5] pt-20">
       <AppNav
@@ -534,72 +515,109 @@ const DashboardView: React.FC<{
         setProfileOpen={setProfileOpen}
       />
 
-      <main className="container mx-auto px-4 py-8 max-w-6xl space-y-12">
-        <div className="bg-black text-white p-10 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <main className="container mx-auto px-4 py-8 max-w-6xl space-y-8">
+        {/* 1. Identity Header */}
+        <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
-            <h2 className="text-5xl md:text-6xl font-black uppercase tracking-tighter mb-4">
-              WELCOME BACK, {profile.name} 👋
+            <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter mb-2">
+              HELLO, {profile.name.split(' ')[0]}
             </h2>
-            <p className="text-xl font-bold uppercase tracking-widest opacity-80">
-              {profile.branch} • {profile.year} • {profile.semester}
-            </p>
+            <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-widest text-gray-500">
+              <span className="bg-black text-white px-2 py-1">{profile.branch}</span>
+              <span>•</span>
+              <span>{profile.year} Year</span>
+              <span>•</span>
+              <span>Sem {profile.semester}</span>
+            </div>
           </div>
-          <button className="text-sm font-black uppercase tracking-widest underline underline-offset-4 hover:opacity-70 transition-opacity">
-            View Profile →
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-          {stats.map((stat, i) => (
-            <div key={i} className={`bg-white p-12 text-center border-b-4 md:border-b-0 md:border-r-4 border-black last:border-r-0 last:border-b-0 flex flex-col items-center justify-center hover:bg-gray-50 transition-colors group`}>
-              <span className="text-7xl font-black tracking-tighter mb-2 group-hover:scale-110 transition-transform">{stat.value}</span>
-              <span className="text-sm font-black uppercase tracking-[0.4em] text-gray-400">{stat.label}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {/* Quick Stats */}
-          <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform cursor-pointer" onClick={() => setView('pyqs')}>
-            <div className="flex justify-between items-start mb-4">
-              <BookOpen size={32} />
-              <span className="bg-black text-white text-xs font-bold px-2 py-1 uppercase">Access Now</span>
-            </div>
-            <h3 className="text-3xl font-black mb-1">500+</h3>
-            <p className="text-sm font-bold uppercase text-gray-500">PYQs Available</p>
-          </div>
-
-          <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform cursor-pointer" onClick={() => setView('materials')}>
-            <div className="flex justify-between items-start mb-4">
-              <FileText size={32} />
-              <span className="bg-black text-white text-xs font-bold px-2 py-1 uppercase">New</span>
-            </div>
-            <h3 className="text-3xl font-black mb-1">45</h3>
-            <p className="text-sm font-bold uppercase text-gray-500">Study Materials</p>
-          </div>
-          <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform cursor-pointer">
-            <div className="flex justify-between items-start mb-4">
-              <Cpu size={32} />
-              <span className="bg-black text-white text-xs font-bold px-2 py-1 uppercase">Try Now</span>
-            </div>
-            <h3 className="text-3xl font-black mb-1">AI</h3>
-            <p className="text-sm font-bold uppercase text-gray-500">Mock Test</p>
-          </div>
-          <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform cursor-pointer">
-            <div className="flex justify-between items-start mb-4">
-              <BarChart3 size={32} />
-              <span className="bg-black text-white text-xs font-bold px-2 py-1 uppercase">View</span>
-            </div>
-            <h3 className="text-3xl font-black mb-1">85%</h3>
-            <p className="text-sm font-bold uppercase text-gray-500">Avg Score</p>
+          <div className="hidden md:block text-right">
+            <p className="text-xs font-black uppercase text-gray-400 tracking-[0.2em] mb-1">CURRENT SESSION</p>
+            <p className="text-xl font-black uppercase">2026 ACADEMIC</p>
           </div>
         </div>
 
-        <div className="space-y-6">
-          <h3 className="text-2xl font-black uppercase tracking-widest flex items-center gap-3">
-            <Calendar size={28} /> Upcoming Exams
-          </h3>
-          <div className="bg-white border-4 border-black p-10 shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[-4px] hover:translate-x-[-4px] hover:shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] transition-all">
+        {/* 2. The Command Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          {/* PYQs - Large Card */}
+          <div
+            onClick={() => setView('pyqs')}
+            className="group bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all cursor-pointer relative overflow-hidden h-64 flex flex-col justify-between"
+          >
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <BookOpen size={120} />
+            </div>
+            <div className="relative z-10">
+              <span className="bg-yellow-400 text-black border-2 border-black px-2 py-1 text-xs font-black uppercase">Core</span>
+              <h3 className="text-4xl font-black uppercase tracking-tighter mt-4">Browse PYQs</h3>
+              <p className="font-bold text-gray-500 uppercase mt-2 max-w-sm">Access the complete archive of previous year question papers.</p>
+            </div>
+            <div className="relative z-10 flex items-center gap-2 font-black uppercase text-sm group-hover:gap-4 transition-all">
+              Access Library <ArrowRight size={16} />
+            </div>
+          </div>
+
+          {/* AI Tools - Large Card */}
+          <div
+            onClick={() => setView('tools')}
+            className="group bg-black text-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(100,100,100,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all cursor-pointer relative overflow-hidden h-64 flex flex-col justify-between"
+          >
+            <div className="absolute top-0 right-0 p-4 opacity-20 text-gray-500">
+              <Cpu size={120} />
+            </div>
+            <div className="relative z-10">
+              <span className="bg-white text-black px-2 py-1 text-xs font-black uppercase border-2 border-white">New</span>
+              <h3 className="text-4xl font-black uppercase tracking-tighter mt-4">AI Power Tools</h3>
+              <p className="font-bold text-gray-400 uppercase mt-2">Mock Tester • Resume Builder • Summarizer</p>
+            </div>
+            <div className="relative z-10 flex items-center gap-2 font-black uppercase text-sm group-hover:gap-4 transition-all">
+              Launch Tools <ArrowRight size={16} />
+            </div>
+          </div>
+
+          {/* Study Materials */}
+          <div
+            onClick={() => setView('materials')}
+            className="group bg-white border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all cursor-pointer flex flex-col justify-between h-48"
+          >
+            <FileText size={48} className="mb-4 group-hover:scale-110 transition-transform" />
+            <div>
+              <h3 className="text-2xl font-black uppercase tracking-tighter">Study Materials</h3>
+              <p className="text-xs font-bold uppercase text-gray-500 mt-1">Lecture notes & slides</p>
+            </div>
+          </div>
+
+          {/* Study Rooms */}
+          <div
+            onClick={() => setView('study-rooms')}
+            className="group bg-white border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all cursor-pointer flex flex-col justify-between h-48"
+          >
+            <div className="flex justify-between items-start">
+              <Headphones size={48} className="mb-4 group-hover:scale-110 transition-transform" />
+              <span className="flex h-3 w-3 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+              </span>
+            </div>
+            <div>
+              <h3 className="text-2xl font-black uppercase tracking-tighter">Live Study Rooms</h3>
+              <p className="text-xs font-bold uppercase text-gray-500 mt-1">Listen & Focus with others</p>
+            </div>
+          </div>
+
+        </div>
+
+        {/* 3. Footer / Status */}
+        <div className="border-t-4 border-black pt-6 flex flex-col md:flex-row justify-between items-center text-xs font-bold uppercase text-gray-400 tracking-widest">
+          <span>System Status: Online</span>
+          <span>v2.4.0 (Stable)</span>
+        </div>
+
+      </main>
+    </div>
+  );
+};
+/*
             <div className="flex justify-between items-start mb-8">
               <div>
                 <h4 className="text-4xl font-black uppercase tracking-tight mb-2">📅 DBMS ENDSEM</h4>
@@ -669,38 +687,41 @@ const DashboardView: React.FC<{
             ))}
           </div>
         </div>
-      </main>
+      </main >
 
-      {/* Notifications Drawer Mockup */}
-      {notifOpen && (
-        <div className="fixed inset-y-0 right-0 w-96 bg-white border-l-8 border-black z-[100] shadow-2xl p-10 overflow-y-auto animate-in slide-in-from-right duration-300">
-          <div className="flex items-center justify-between mb-12">
-            <h3 className="text-3xl font-black uppercase tracking-tighter">ALERTS [🔔]</h3>
-            <button onClick={() => setNotifOpen(false)} className="p-2 border-4 border-black hover:bg-black hover:text-white transition-colors">
-              <X size={24} />
-            </button>
-          </div>
-          <div className="space-y-8">
-            <div className="p-6 border-4 border-black bg-gray-50 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-1 bg-red-600 text-white text-[8px] font-black uppercase">NEW</div>
-              <p className="text-xs font-black uppercase text-red-600 mb-2 tracking-widest">PYQ ARCHIVE UPDATE</p>
-              <p className="text-lg font-bold uppercase leading-none mb-4">Advanced Algorithms 2025 paper now available.</p>
-              <p className="text-[10px] font-black uppercase text-gray-400">2 hours ago</p>
-            </div>
-            <div className="p-6 border-4 border-black bg-gray-50 group">
-              <p className="text-xs font-black uppercase text-gray-600 mb-2 tracking-widest">DEADLINE REMINDER</p>
-              <p className="text-lg font-bold uppercase leading-none mb-4">Your DBMS Endsem is in 15 days. Start preparing!</p>
-              <p className="text-[10px] font-black uppercase text-gray-400">Yesterday</p>
-            </div>
-          </div>
-          <button className="w-full mt-16 py-4 border-4 border-black bg-black text-white font-black uppercase text-sm hover:bg-gray-800 transition-colors tracking-[0.2em]">
-            MARK ALL AS READ
-          </button>
+
+{
+  notifOpen && (
+    <div className="fixed inset-y-0 right-0 w-96 bg-white border-l-8 border-black z-[100] shadow-2xl p-10 overflow-y-auto animate-in slide-in-from-right duration-300">
+      <div className="flex items-center justify-between mb-12">
+        <h3 className="text-3xl font-black uppercase tracking-tighter">ALERTS [🔔]</h3>
+        <button onClick={() => setNotifOpen(false)} className="p-2 border-4 border-black hover:bg-black hover:text-white transition-colors">
+          <X size={24} />
+        </button>
+      </div>
+      <div className="space-y-8">
+        <div className="p-6 border-4 border-black bg-gray-50 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-1 bg-red-600 text-white text-[8px] font-black uppercase">NEW</div>
+          <p className="text-xs font-black uppercase text-red-600 mb-2 tracking-widest">PYQ ARCHIVE UPDATE</p>
+          <p className="text-lg font-bold uppercase leading-none mb-4">Advanced Algorithms 2025 paper now available.</p>
+          <p className="text-[10px] font-black uppercase text-gray-400">2 hours ago</p>
         </div>
-      )}
+        <div className="p-6 border-4 border-black bg-gray-50 group">
+          <p className="text-xs font-black uppercase text-gray-600 mb-2 tracking-widest">DEADLINE REMINDER</p>
+          <p className="text-lg font-bold uppercase leading-none mb-4">Your DBMS Endsem is in 15 days. Start preparing!</p>
+          <p className="text-[10px] font-black uppercase text-gray-400">Yesterday</p>
+        </div>
+      </div>
+      <button className="w-full mt-16 py-4 border-4 border-black bg-black text-white font-black uppercase text-sm hover:bg-gray-800 transition-colors tracking-[0.2em]">
+        MARK ALL AS READ
+      </button>
     </div>
+  )
+}
+    </div >
   );
 };
+*/
 
 
 
