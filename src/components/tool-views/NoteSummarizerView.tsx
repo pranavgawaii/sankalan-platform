@@ -1,0 +1,178 @@
+import React, { useState } from 'react';
+import { ArrowLeft, Sparkles, Upload, FileText, Loader2, AlertTriangle, Download, Settings } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import * as pdfjsLib from 'pdfjs-dist';
+// @ts-ignore
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+
+// Set worker source locally for Vite
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+
+const NoteSummarizerView: React.FC<{ onBack: () => void; apiKey: string; onUpdateKey: () => void }> = ({ onBack, apiKey, onUpdateKey }) => {
+    const [file, setFile] = useState<File | null>(null);
+    const [summary, setSummary] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [status, setStatus] = useState(''); // "Reading PDF...", "Analyzing..."
+    const [error, setError] = useState('');
+
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFile = event.target.files?.[0];
+        if (!selectedFile) return;
+        if (selectedFile.type !== 'application/pdf') {
+            setError('Please upload a valid PDF file.');
+            return;
+        }
+        setFile(selectedFile);
+        setError('');
+    };
+
+    const extractText = async (pdfFile: File): Promise<string> => {
+        const arrayBuffer = await pdfFile.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+
+        // Limit pages to avoid token limits for this demo
+        const maxPages = Math.min(pdf.numPages, 10);
+
+        for (let i = 1; i <= maxPages; i++) {
+            setStatus(`Reading page ${i}/${maxPages}...`);
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map((item: any) => item.str).join(' ');
+            fullText += pageText + '\n';
+        }
+        return fullText;
+    };
+
+    const generateSummary = async () => {
+        if (!file) return;
+        setIsLoading(true);
+        setError('');
+
+        try {
+            setStatus('Extracting text from PDF...');
+            const text = await extractText(file);
+
+            setStatus('Sending to Gemini AI...');
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+            const prompt = `
+                Summarize the following academic notes into a concise, 1-page "Cheat Sheet" format.
+                Use Markdown.
+                Include:
+                - **Key Definitions**
+                - **Important Formulas/Concepts**
+                - **Bullet points for easy reading**
+                
+                TEXT:
+                ${text.substring(0, 10000)} // Truncate to safety limit
+            `;
+
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            setSummary(response.text());
+
+        } catch (err: any) {
+            console.error(err);
+            setError(`Google AI Error: ${err.message.replace(/\[.*?\]/g, '')}`);
+
+            if (err.message.includes('404') || err.message.includes('403')) {
+                onUpdateKey();
+            }
+        } finally {
+            setIsLoading(false);
+            setStatus('');
+        }
+    };
+
+    return (
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <button onClick={onBack} className="mb-6 flex items-center gap-2 text-xs font-black uppercase hover:underline">
+                <ArrowLeft size={14} /> Back to Tools
+            </button>
+            <button onClick={onUpdateKey} className="absolute top-0 right-0 mb-6 flex items-center gap-2 text-xs font-black uppercase hover:underline text-gray-500">
+                <Settings size={14} /> API Key
+            </button>
+
+            <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                <div className="flex items-center gap-4 mb-8 border-b-4 border-black pb-4">
+                    <div className="bg-black text-white p-3">
+                        <Sparkles size={32} />
+                    </div>
+                    <div>
+                        <h2 className="text-3xl font-black uppercase tracking-tighter">Note Summarizer</h2>
+                        <p className="text-sm font-bold uppercase text-gray-500">Turn 50 pages into 1 page.</p>
+                    </div>
+                </div>
+
+                {!summary ? (
+                    <div className="flex flex-col items-center justify-center p-12 border-4 border-dashed border-gray-300 bg-gray-50 hover:border-black transition-colors">
+                        <Upload size={48} className="mb-4 text-gray-400" />
+                        <h3 className="text-xl font-black uppercase mb-2">Upload PDF Notes</h3>
+                        <p className="text-xs font-bold text-gray-500 uppercase mb-6">Max 10MB • Text-based PDFs only</p>
+
+                        <input
+                            type="file"
+                            accept=".pdf"
+                            onChange={handleFileUpload}
+                            className="hidden"
+                            id="pdf-upload"
+                        />
+                        <label
+                            htmlFor="pdf-upload"
+                            className="bg-black text-white px-8 py-3 font-black uppercase cursor-pointer hover:bg-gray-800 transition-colors"
+                        >
+                            Select File
+                        </label>
+
+                        {file && (
+                            <div className="mt-6 flex flex-col items-center w-full max-w-sm">
+                                <div className="flex items-center gap-2 text-sm font-bold border-2 border-black p-2 bg-white w-full justify-center">
+                                    <FileText size={16} /> {file.name}
+                                </div>
+                                <button
+                                    onClick={generateSummary}
+                                    disabled={isLoading}
+                                    className="mt-4 w-full py-3 bg-green-500 text-black border-2 border-black font-black uppercase hover:bg-green-400 disabled:opacity-50"
+                                >
+                                    {isLoading ? (
+                                        <><Loader2 size={16} className="animate-spin inline mr-2" /> {status}</>
+                                    ) : (
+                                        'Summarize Now'
+                                    )}
+                                </button>
+                            </div>
+                        )}
+
+                        {error && (
+                            <div className="mt-4 text-red-600 font-bold uppercase text-xs flex items-center gap-2">
+                                <AlertTriangle size={14} /> {error}
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <div className="flex gap-8 flex-col lg:flex-row h-[70vh]">
+                        {/* Summary View */}
+                        <div className="flex-1 border-2 border-black p-8 overflow-y-auto bg-white font-mono text-sm leading-relaxed prose prose-sm max-w-none prose-headings:font-black prose-headings:uppercase prose-p:font-bold prose-strong:bg-yellow-200">
+                            <ReactMarkdown>{summary}</ReactMarkdown>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="w-full lg:w-64 space-y-4 shrink-0">
+                            <button onClick={() => setSummary('')} className="w-full py-3 border-2 border-black font-black uppercase hover:bg-gray-100">
+                                Summarize Another
+                            </button>
+                            <button className="w-full py-3 bg-black text-white border-2 border-black font-black uppercase hover:bg-gray-900 flex items-center justify-center gap-2">
+                                <Download size={16} /> Download MD
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default NoteSummarizerView;

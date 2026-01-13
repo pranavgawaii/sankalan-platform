@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import {
     Cpu,
@@ -11,6 +12,10 @@ import {
     Zap
 } from 'lucide-react';
 import useSound from '../hooks/useSound';
+import MockTesterView from './tool-views/MockTesterView';
+import ResumeBuilderView from './tool-views/ResumeBuilderView';
+import NoteSummarizerView from './tool-views/NoteSummarizerView';
+import GeminiKeyModal from './ai/GeminiKeyModal';
 
 interface Tool {
     id: string;
@@ -67,6 +72,52 @@ const TOOLS: Tool[] = [
 
 const AITools: React.FC = () => {
     const playClick = useSound();
+    const [showKeyModal, setShowKeyModal] = React.useState(false);
+    const [activeTool, setActiveTool] = React.useState<string | null>(null);
+    const [pendingToolId, setPendingToolId] = React.useState<string | null>(null);
+    const [apiKey, setApiKey] = React.useState(localStorage.getItem('GEMINI_API_KEY') || '');
+
+    const handleToolLaunch = (toolId: string) => {
+        playClick();
+        // Always show key modal first as requested by user
+        setPendingToolId(toolId);
+        setShowKeyModal(true);
+    };
+
+    const handleKeySave = () => {
+        // Refresh key from storage
+        const newKey = localStorage.getItem('GEMINI_API_KEY') || '';
+        setApiKey(newKey);
+
+        if (pendingToolId) {
+            setShowKeyModal(false);
+            setActiveTool(pendingToolId);
+            setPendingToolId(null);
+        } else {
+            setShowKeyModal(false);
+        }
+    };
+
+    const renderActiveTool = () => {
+        if (activeTool === 'mock-tests') return <MockTesterView onBack={() => setActiveTool(null)} apiKey={apiKey} onUpdateKey={() => setShowKeyModal(true)} />;
+        if (activeTool === 'resume') return <ResumeBuilderView onBack={() => setActiveTool(null)} />;
+        if (activeTool === 'summary') return <NoteSummarizerView onBack={() => setActiveTool(null)} apiKey={apiKey} onUpdateKey={() => setShowKeyModal(true)} />;
+        return null;
+    };
+
+    if (activeTool) {
+        return (
+            <>
+                {renderActiveTool()}
+                <GeminiKeyModal
+                    isOpen={showKeyModal}
+                    onClose={() => setShowKeyModal(false)}
+                    onSave={handleKeySave}
+                />
+            </>
+        );
+    }
+
     return (
         <div className="container mx-auto max-w-6xl">
             <div className="mb-12 text-center">
@@ -115,7 +166,7 @@ const AITools: React.FC = () => {
                         </div>
 
                         <button
-                            onClick={playClick}
+                            onClick={() => handleToolLaunch(tool.id)}
                             disabled={tool.status === 'coming_soon'}
                             className="w-full py-3 border-4 border-black font-black uppercase text-sm flex items-center justify-center gap-2 group-hover:bg-black group-hover:text-white transition-colors disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-black"
                         >
@@ -135,6 +186,12 @@ const AITools: React.FC = () => {
                     <Sparkles size={20} /> Request Feature
                 </button>
             </div>
+
+            <GeminiKeyModal
+                isOpen={showKeyModal}
+                onClose={() => setShowKeyModal(false)}
+                onSave={handleKeySave}
+            />
         </div>
     );
 };

@@ -56,7 +56,7 @@ import Loader from './src/components/Loader';
 
 // --- Types ---
 type View = 'landing' | 'auth' | 'onboarding' | 'dashboard' | 'pyqs' | 'materials' | 'tools' | 'about' | 'profile' | 'settings' | 'study-rooms' | 'live-room' | 'admin-dashboard';
-type AuthMode = 'signin' | 'signup';
+type AuthMode = 'signin' | 'signup' | 'admin-login';
 
 interface UserProfile {
   name: string;
@@ -510,6 +510,7 @@ const DashboardView: React.FC<{
   const actions = [
     { icon: '📚', title: 'BROWSE PYQS', desc: '500+ papers organized', id: 'pyqs' },
     { icon: '🤖', title: 'AI MOCK TEST', desc: 'Generate custom quiz', id: 'tools' },
+    { icon: '🎧', title: 'STUDY ROOMS', desc: 'Join live sessions', id: 'study-rooms' },
     { icon: '📊', title: 'MY PROGRESS', desc: 'View detailed analytics', id: 'progress' },
     { icon: '📝', title: 'STUDY MATERIALS', desc: 'Notes & subject slides', id: 'materials' }
   ];
@@ -856,47 +857,26 @@ const OnboardingPage: React.FC<{ onComplete: (profile: Partial<UserProfile>) => 
 // --- Auth Component ---
 
 const AuthPage: React.FC<{ mode: AuthMode; setMode: (mode: AuthMode) => void; onSuccess: () => void; onAdminAuth: () => void }> = ({ mode, setMode, onSuccess, onAdminAuth }) => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(''); // Kept for consistency if needed later, though Clerk handles student auth
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const validateEmail = (e: string) => {
-    if (e && !e.endsWith('@mitadt.ac.in')) {
-      setError('ONLY @MITADT.AC.IN EMAILS PERMITTED');
-    } else {
-      setError('');
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleAdminSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.endsWith('@mitadt.ac.in')) {
-      setError('ONLY @MITADT.AC.IN EMAILS PERMITTED');
-      return;
-    }
+    setError('');
     setIsLoading(true);
-    // Simulate API call
+
+    // Mock Admin Credentials
     setTimeout(() => {
-      setIsLoading(false);
-      onSuccess();
+      if (username === 'admin' && password === 'admin123') {
+        onAdminAuth();
+      } else {
+        setError('INVALID CREDENTIALS');
+        setIsLoading(false);
+      }
     }, 1000);
-  };
-
-  const handleDemoSignIn = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      onSuccess();
-    }, 800);
-  };
-
-  const handleAdminSignIn = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      onAdminAuth();
-    }, 800);
   };
 
   return (
@@ -917,110 +897,156 @@ const AuthPage: React.FC<{ mode: AuthMode; setMode: (mode: AuthMode) => void; on
         </div>
       </div>
 
-      {/* Right Panel: Clerk Auth */}
-      <div className="md:w-1/2 bg-white flex flex-col items-center justify-center p-6 md:p-12 relative">
-        <div className="w-full max-w-md flex flex-col items-center gap-6">
-          {mode === 'signin' ? (
+      {/* Right Panel: Content */}
+      <div className="md:w-1/2 bg-white flex flex-col items-center justify-center p-6 md:p-12 relative text-left">
 
-            <>
-              <SignIn
-                appearance={{
-                  variables: {
-                    colorPrimary: '#000000',
-                    colorText: '#000000',
-                    colorBackground: '#ffffff',
-                    colorInputBackground: '#ffffff',
-                    colorInputText: '#000000',
-                    fontFamily: 'inherit',
-                    borderRadius: '0px',
-                  },
-                  elements: {
-                    card: "shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] border-4 border-black rounded-none bg-white",
-                    headerTitle: "font-black uppercase tracking-tighter text-2xl",
-                    headerSubtitle: "font-bold uppercase tracking-widest opacity-60 text-xs",
-                    socialButtonsBlockButton: "border-2 border-black font-bold uppercase hover:bg-gray-50 rounded-none text-xs",
-                    formButtonPrimary: "bg-black hover:bg-gray-900 text-white font-black uppercase tracking-widest border-4 border-black rounded-none shadow-none text-xs py-3",
-                    footerActionLink: "text-black font-bold hover:underline",
-                    footer: "hidden",
-                    formFieldInput: "border-2 border-black rounded-none font-bold shadow-none",
-                    formFieldLabel: "uppercase font-bold tracking-widest text-[10px]",
-                    dividerLine: "bg-black h-[1px]",
-                    dividerText: "font-bold uppercase text-[10px] tracking-widest bg-white px-2 text-black",
-                    identityPreviewEditButton: "text-black font-bold hover:underline",
-                    formFieldWarningText: "text-xs font-bold text-red-600 uppercase",
-                    formFieldErrorText: "text-xs font-bold text-red-600 uppercase"
-                  }
-                }}
-                signUpUrl="#"
-                fallbackRedirectUrl="/dashboard"
-              />
-              <div className="mt-4 flex flex-col items-center gap-2">
-                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest">
-                  <span>New to Sankalan?</span>
-                  <button
-                    onClick={() => setMode('signup')}
-                    className="font-black hover:underline"
-                  >
-                    Create Account
+        {mode === 'admin-login' ? (
+          // --- ADMIN LOGIN FORM ---
+          <div className="w-full max-w-md animate-in fade-in slide-in-from-right duration-300">
+            <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative">
+              <div className="absolute -top-6 left-0 bg-black text-white px-2 py-1 text-xs font-black uppercase tracking-widest">
+                Restricted Area
+              </div>
+              <h2 className="text-3xl font-black uppercase tracking-tighter mb-6 flex items-center gap-2">
+                <Lock size={28} /> Admin Access
+              </h2>
+
+              <form onSubmit={handleAdminSubmit} className="space-y-6">
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest mb-2">User ID</label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full p-3 border-2 border-black font-bold uppercase focus:outline-none focus:bg-gray-50 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+                    placeholder="ADMIN"
+                    autoFocus
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest mb-2">Password</label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full p-3 border-2 border-black font-bold focus:outline-none focus:bg-gray-50 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+                    placeholder="••••••••"
+                  />
+                </div>
+
+                {error && (
+                  <div className="bg-red-50 border-2 border-red-600 p-2 flex items-center gap-2">
+                    <AlertTriangle size={16} className="text-red-600" />
+                    <span className="text-red-800 font-bold uppercase text-xs">{error}</span>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-black text-white py-4 font-black uppercase tracking-[0.2em] border-2 border-black hover:bg-gray-900 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isLoading ? <span className="animate-pulse">VERIFYING...</span> : 'ACCESS DASHBOARD'}
+                </button>
+              </form>
+
+              <div className="mt-8 pt-6 border-t-2 border-black text-center">
+                <button onClick={() => setMode('signin')} className="text-xs font-bold uppercase hover:underline text-gray-500 flex items-center justify-center gap-2 mx-auto">
+                  <ArrowLeft size={12} /> Back to Student Login
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          // --- STUDENT CLERK LOGIN ---
+          <div className="w-full max-w-md flex flex-col items-center gap-6 animate-in fade-in slide-in-from-left duration-300">
+            {mode === 'signin' ? (
+              <>
+                <SignIn
+                  appearance={{
+                    variables: {
+                      colorPrimary: '#000000',
+                      colorText: '#000000',
+                      colorBackground: '#ffffff',
+                      colorInputBackground: '#ffffff',
+                      colorInputText: '#000000',
+                      fontFamily: 'inherit',
+                      borderRadius: '0px',
+                    },
+                    elements: {
+                      card: "shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] border-4 border-black rounded-none bg-white",
+                      headerTitle: "font-black uppercase tracking-tighter text-2xl",
+                      headerSubtitle: "font-bold uppercase tracking-widest opacity-60 text-xs",
+                      socialButtonsBlockButton: "border-2 border-black font-bold uppercase hover:bg-gray-50 rounded-none text-xs",
+                      formButtonPrimary: "bg-black hover:bg-gray-900 text-white font-black uppercase tracking-widest border-4 border-black rounded-none shadow-none text-xs py-3",
+                      footerActionLink: "text-black font-bold hover:underline",
+                      footer: "hidden",
+                      formFieldInput: "border-2 border-black rounded-none font-bold shadow-none",
+                      formFieldLabel: "uppercase font-bold tracking-widest text-[10px]",
+                      dividerLine: "bg-black h-[1px]",
+                      dividerText: "font-bold uppercase text-[10px] tracking-widest bg-white px-2 text-black",
+                      identityPreviewEditButton: "text-black font-bold hover:underline",
+                      formFieldWarningText: "text-xs font-bold text-red-600 uppercase",
+                      formFieldErrorText: "text-xs font-bold text-red-600 uppercase"
+                    }
+                  }}
+                  signUpUrl="#"
+                  fallbackRedirectUrl="/dashboard"
+                />
+                <div className="w-full mt-4 flex justify-between items-center text-[10px] font-bold uppercase tracking-widest px-1">
+                  <div className="flex gap-2">
+                    <span>New user?</span>
+                    <button onClick={() => setMode('signup')} className="font-black hover:underline">Create Account</button>
+                  </div>
+                  <button onClick={() => setMode('admin-login')} className="flex items-center gap-1 text-gray-400 hover:text-black transition-colors">
+                    <Lock size={10} /> Admin Login
                   </button>
                 </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <SignUp
-                appearance={{
-                  variables: {
-                    colorPrimary: '#000000',
-                    colorText: '#000000',
-                    colorBackground: '#ffffff',
-                    colorInputBackground: '#ffffff',
-                    colorInputText: '#000000',
-                    fontFamily: 'inherit',
-                    borderRadius: '0px',
-                  },
-                  elements: {
-                    card: "shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] border-4 border-black rounded-none bg-white",
-                    headerTitle: "font-black uppercase tracking-tighter text-2xl",
-                    headerSubtitle: "font-bold uppercase tracking-widest opacity-60 text-xs",
-                    socialButtonsBlockButton: "border-2 border-black font-bold uppercase hover:bg-gray-50 rounded-none text-xs",
-                    formButtonPrimary: "bg-black hover:bg-gray-900 text-white font-black uppercase tracking-widest border-4 border-black rounded-none shadow-none text-xs py-3",
-                    footerActionLink: "hidden",
-                    footer: "hidden",
-                    formFieldInput: "border-2 border-black rounded-none font-bold shadow-none",
-                    formFieldLabel: "uppercase font-bold tracking-widest text-[10px]",
-                    dividerLine: "bg-black h-[1px]",
-                    dividerText: "font-bold uppercase text-[10px] tracking-widest bg-white px-2 text-black",
-                    identityPreviewEditButton: "text-black font-bold hover:underline",
-                    alertText: "text-red-600 font-bold",
-                    formFieldWarningText: "text-xs font-bold text-red-600 uppercase",
-                    formFieldErrorText: "text-xs font-bold text-red-600 uppercase"
-                  }
-                }}
-                signInUrl="#"
-                fallbackRedirectUrl="/dashboard"
-              />
-              <div className="mt-4 flex flex-col items-center gap-2">
-                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest">
-                  <span>Already have an account?</span>
-                  <button
-                    onClick={() => setMode('signin')}
-                    className="font-black hover:underline"
-                  >
-                    Sign In
-                  </button>
+              </>
+            ) : (
+              <>
+                <SignUp
+                  appearance={{
+                    variables: {
+                      colorPrimary: '#000000',
+                      colorText: '#000000',
+                      colorBackground: '#ffffff',
+                      colorInputBackground: '#ffffff',
+                      colorInputText: '#000000',
+                      fontFamily: 'inherit',
+                      borderRadius: '0px',
+                    },
+                    elements: {
+                      card: "shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] border-4 border-black rounded-none bg-white",
+                      headerTitle: "font-black uppercase tracking-tighter text-2xl",
+                      headerSubtitle: "font-bold uppercase tracking-widest opacity-60 text-xs",
+                      socialButtonsBlockButton: "border-2 border-black font-bold uppercase hover:bg-gray-50 rounded-none text-xs",
+                      formButtonPrimary: "bg-black hover:bg-gray-900 text-white font-black uppercase tracking-widest border-4 border-black rounded-none shadow-none text-xs py-3",
+                      footerActionLink: "hidden",
+                      footer: "hidden",
+                      formFieldInput: "border-2 border-black rounded-none font-bold shadow-none",
+                      formFieldLabel: "uppercase font-bold tracking-widest text-[10px]",
+                      dividerLine: "bg-black h-[1px]",
+                      dividerText: "font-bold uppercase text-[10px] tracking-widest bg-white px-2 text-black",
+                      identityPreviewEditButton: "text-black font-bold hover:underline",
+                      alertText: "text-red-600 font-bold",
+                      formFieldWarningText: "text-xs font-bold text-red-600 uppercase",
+                      formFieldErrorText: "text-xs font-bold text-red-600 uppercase"
+                    }
+                  }}
+                  signInUrl="#"
+                  fallbackRedirectUrl="/dashboard"
+                />
+                <div className="w-full mt-4 flex justify-between items-center text-[10px] font-bold uppercase tracking-widest px-1">
+                  <div className="flex gap-2">
+                    <span>Has account?</span>
+                    <button onClick={() => setMode('signin')} className="font-black hover:underline">Sign In</button>
+                  </div>
                 </div>
-              </div>
-            </>
-          )}
-
-          <button
-            onClick={onAdminAuth}
-            className="mt-4 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-black transition-colors flex items-center gap-2"
-          >
-            <Lock size={12} /> admin_access_override_v1.0
-          </button>
-        </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1455,7 +1481,7 @@ const FeaturesGrid: React.FC = () => (
         ].map((item, i) => (
           <motion.div
             key={i}
-            variants={{ hidden: { opacity: 0, opacity: 0 }, visible: { opacity: 1, opacity: 1 } }}
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
             className="p-8 border-b-4 border-black last:border-b-0 md:even:border-l-4 lg:even:border-l-0 lg:[&:nth-child(3n+2)]:border-l-4 lg:[&:nth-child(3n)]:border-l-4 group hover:bg-gray-50 transition-colors"
           >
             <div className="flex items-center gap-3 mb-6">
@@ -1566,6 +1592,65 @@ export default function App() {
 
   const [globalProfileOpen, setGlobalProfileOpen] = useState(false);
   const [globalNotifOpen, setGlobalNotifOpen] = useState(false);
+
+  // Study Rooms State
+  const [activeRoom, setActiveRoom] = useState<any>(null);
+  const [rooms, setRooms] = useState([
+    {
+      id: '1',
+      title: 'DBMS Marathon - Endsem Prep',
+      subject: 'DBMS',
+      topic: 'Normalization & Transactions',
+      members: 4,
+      maxMembers: 8,
+      activeTime: '1h 23m',
+      type: 'Collaborative' as const,
+      isPomodoro: false
+    },
+    {
+      id: '2',
+      title: 'CN Silent Study - Pomodoro',
+      subject: 'CN',
+      topic: 'Network Layer',
+      members: 2,
+      maxMembers: 6,
+      activeTime: '45m',
+      type: 'Focus' as const,
+      isPomodoro: true
+    },
+    {
+      id: '3',
+      title: 'OS Deadlock & Scheduling',
+      subject: 'OS',
+      topic: 'Solving PYQs from 2023',
+      members: 5,
+      maxMembers: 10,
+      activeTime: '2h 10m',
+      type: 'Doubt' as const,
+      isPomodoro: false
+    }
+  ]);
+
+  const handleCreateRoom = (newRoom: any) => {
+    const room = { ...newRoom, id: Date.now().toString(), members: 1, activeTime: '1m' };
+    setRooms([room, ...rooms]);
+    setActiveRoom(room);
+    setView('live-room');
+  };
+
+  const handleJoinRoom = (roomId: string) => {
+    const room = rooms.find((r: any) => r.id === roomId);
+    if (room) {
+      setActiveRoom(room);
+      setView('live-room');
+    }
+  };
+
+  const handleLeaveRoom = () => {
+    setActiveRoom(null);
+    setView('study-rooms');
+  };
+
 
   // Redirect to dashboard ONLY if we are in a "public" view (landing/auth)
   // This prevents the loop if we are intentionally logging out (though signOut clears isSignedIn)
@@ -1847,12 +1932,12 @@ export default function App() {
             profileOpen={globalProfileOpen}
             setProfileOpen={setGlobalProfileOpen}
           />
-          <StudyRooms onJoinRoom={() => handleSetView('live-room')} />
+          <StudyRooms rooms={rooms} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} />
         </div>
       )}
 
-      {view === 'live-room' && (
-        <LiveRoom onLeave={() => handleSetView('study-rooms')} />
+      {view === 'live-room' && activeRoom && (
+        <LiveRoom roomData={activeRoom} onLeave={handleLeaveRoom} />
       )}
 
       {view === 'admin-dashboard' && (

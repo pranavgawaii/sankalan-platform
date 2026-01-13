@@ -16,47 +16,32 @@ interface Room {
     isPomodoro: boolean;
 }
 
-// --- Mock Data ---
-const ACTIVE_ROOMS: Room[] = [
-    {
-        id: '1',
-        title: 'DBMS Marathon - Endsem Prep',
-        subject: 'DBMS',
-        topic: 'Normalization & Transactions',
-        members: 4,
-        maxMembers: 8,
-        activeTime: '1h 23m',
-        type: 'Collaborative',
-        isPomodoro: false
-    },
-    {
-        id: '2',
-        title: 'CN Silent Study - Pomodoro',
-        subject: 'CN',
-        topic: 'Network Layer',
-        members: 2,
-        maxMembers: 6,
-        activeTime: '45m',
-        type: 'Focus',
-        isPomodoro: true
-    },
-    {
-        id: '3',
-        title: 'OS Deadlock & Scheduling',
-        subject: 'OS',
-        topic: 'Solving PYQs from 2023',
-        members: 5,
-        maxMembers: 10,
-        activeTime: '2h 10m',
-        type: 'Doubt',
-        isPomodoro: false
-    }
-];
-
 // --- Components ---
 
-const CreateRoomModal: React.FC<{ isOpen: boolean; onClose: () => void; onJoin: (roomId: string) => void }> = ({ isOpen, onClose, onJoin }) => {
+const CreateRoomModal: React.FC<{ isOpen: boolean; onClose: () => void; onCreate: (room: any) => void }> = ({ isOpen, onClose, onCreate }) => {
     const playClick = useSound();
+    const [formData, setFormData] = useState({
+        title: '',
+        subject: 'DBMS',
+        maxMembers: 4,
+        type: 'Collaborative',
+        topic: ''
+    });
+
+    const handleSubmit = () => {
+        playClick();
+        if (!formData.title) {
+            alert('Please enter a room name');
+            return;
+        }
+        onCreate({
+            ...formData,
+            activeTime: 'Just started',
+            members: 1,
+            isPomodoro: formData.type === 'Focus'
+        });
+        onClose();
+    };
 
     if (!isOpen) return null;
 
@@ -71,13 +56,34 @@ const CreateRoomModal: React.FC<{ isOpen: boolean; onClose: () => void; onJoin: 
                 <div className="p-6 space-y-6">
                     <div>
                         <label className="text-[10px] font-black uppercase mb-1 block">Room Name</label>
-                        <input type="text" placeholder="e.g., DBMS Marathon - Endsem Prep" className="w-full border-2 border-black p-3 font-bold uppercase focus:outline-none focus:bg-yellow-50" />
+                        <input
+                            type="text"
+                            placeholder="e.g., DBMS Marathon - Endsem Prep"
+                            className="w-full border-2 border-black p-3 font-bold uppercase focus:outline-none focus:bg-yellow-50"
+                            value={formData.title}
+                            onChange={e => setFormData({ ...formData, title: e.target.value })}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="text-[10px] font-black uppercase mb-1 block">Topic / Goal</label>
+                        <input
+                            type="text"
+                            placeholder="e.g. Solving 2023 PYQs"
+                            className="w-full border-2 border-black p-3 font-bold uppercase focus:outline-none focus:bg-yellow-50"
+                            value={formData.topic}
+                            onChange={e => setFormData({ ...formData, topic: e.target.value })}
+                        />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="text-[10px] font-black uppercase mb-1 block">Subject</label>
-                            <select className="w-full border-2 border-black p-3 font-bold uppercase cursor-pointer">
+                            <select
+                                className="w-full border-2 border-black p-3 font-bold uppercase cursor-pointer"
+                                value={formData.subject}
+                                onChange={e => setFormData({ ...formData, subject: e.target.value })}
+                            >
                                 <option>DBMS</option>
                                 <option>CN</option>
                                 <option>OS</option>
@@ -87,8 +93,14 @@ const CreateRoomModal: React.FC<{ isOpen: boolean; onClose: () => void; onJoin: 
                         <div>
                             <label className="text-[10px] font-black uppercase mb-1 block">Max Members</label>
                             <div className="flex justify-between border-2 border-black p-2 bg-gray-50">
-                                {[2, 4, 6, 8, 12].map(n => (
-                                    <button key={n} onClick={playClick} className="w-8 h-8 flex items-center justify-center font-bold hover:bg-black hover:text-white rounded-full transition-colors text-xs">{n}</button>
+                                {[2, 4, 6, 8].map(n => (
+                                    <button
+                                        key={n}
+                                        onClick={() => { playClick(); setFormData({ ...formData, maxMembers: n }); }}
+                                        className={`w-8 h-8 flex items-center justify-center font-bold hover:bg-black hover:text-white rounded-full transition-colors text-xs ${formData.maxMembers === n ? 'bg-black text-white' : ''}`}
+                                    >
+                                        {n}
+                                    </button>
                                 ))}
                             </div>
                         </div>
@@ -97,9 +109,15 @@ const CreateRoomModal: React.FC<{ isOpen: boolean; onClose: () => void; onJoin: 
                     <div>
                         <label className="text-[10px] font-black uppercase mb-1 block">Room Type</label>
                         <div className="space-y-2">
-                            {['Focus Mode (Silent, timer only)', 'Collaborative (Chat, Screen Share)', 'Doubt Solving (Q&A)'].map((t, i) => (
+                            {['Focus', 'Collaborative', 'Doubt'].map((t, i) => (
                                 <label key={i} className="flex items-center gap-3 p-3 border-2 border-black cursor-pointer hover:bg-gray-50">
-                                    <input type="radio" name="roomType" className="w-4 h-4 text-black border-2 border-black focus:ring-0" defaultChecked={i === 1} />
+                                    <input
+                                        type="radio"
+                                        name="roomType"
+                                        className="w-4 h-4 text-black border-2 border-black focus:ring-0"
+                                        checked={formData.type === t}
+                                        onChange={() => setFormData({ ...formData, type: t as any })}
+                                    />
                                     <span className="font-bold uppercase text-xs">{t}</span>
                                 </label>
                             ))}
@@ -107,7 +125,7 @@ const CreateRoomModal: React.FC<{ isOpen: boolean; onClose: () => void; onJoin: 
                     </div>
 
                     <button
-                        onClick={() => { playClick(); onJoin('new-room'); }}
+                        onClick={handleSubmit}
                         className="w-full py-4 bg-black text-white border-2 border-black font-black uppercase text-lg hover:bg-gray-800 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] transition-all active:translate-y-1 active:shadow-none"
                     >
                         Create Room & Join →
@@ -118,7 +136,7 @@ const CreateRoomModal: React.FC<{ isOpen: boolean; onClose: () => void; onJoin: 
     );
 };
 
-const StudyRooms: React.FC<{ onJoinRoom: (roomId: string) => void }> = ({ onJoinRoom }) => {
+const StudyRooms: React.FC<{ rooms: Room[]; onCreateRoom: (room: any) => void; onJoinRoom: (roomId: string) => void }> = ({ rooms, onCreateRoom, onJoinRoom }) => {
     const playClick = useSound();
     const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -151,7 +169,7 @@ const StudyRooms: React.FC<{ onJoinRoom: (roomId: string) => void }> = ({ onJoin
 
                 {/* Active Rooms Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-                    {ACTIVE_ROOMS.map(room => (
+                    {rooms.map(room => (
                         <div key={room.id} className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transition-all group flex flex-col justify-between h-full">
                             <div>
                                 <div className="flex justify-between items-start mb-4">
@@ -164,8 +182,8 @@ const StudyRooms: React.FC<{ onJoinRoom: (roomId: string) => void }> = ({ onJoin
                                         </span>
                                     )}
                                 </div>
-                                <h3 className="text-2xl font-black uppercase mb-2 leading-tight group-hover:underline decoration-4">{room.title}</h3>
-                                <p className="font-bold text-gray-500 mb-6 uppercase text-sm">Topic: {room.topic}</p>
+                                <h3 className="text-2xl font-black uppercase mb-2 leading-tight group-hover:underline decoration-4 truncate">{room.title}</h3>
+                                <p className="font-bold text-gray-500 mb-6 uppercase text-sm truncate">Topic: {room.topic}</p>
 
                                 <div className="space-y-3 mb-6">
                                     <div className="flex items-center gap-2 text-sm font-bold uppercase">
@@ -233,7 +251,14 @@ const StudyRooms: React.FC<{ onJoinRoom: (roomId: string) => void }> = ({ onJoin
 
             </div>
 
-            <CreateRoomModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} onJoin={(id) => { setShowCreateModal(false); onJoinRoom(id); }} />
+            <CreateRoomModal
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                onCreate={(newRoom) => {
+                    onCreateRoom(newRoom);
+                    setShowCreateModal(false);
+                }}
+            />
         </div>
     );
 };
