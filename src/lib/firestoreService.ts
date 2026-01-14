@@ -9,7 +9,7 @@ import {
     increment,
     limit
 } from 'firebase/firestore';
-import { db } from '../../firebaseConfig';
+import { db } from './firebase';
 
 export interface StudyFilter {
     type?: 'all' | 'pyq' | 'note' | 'video' | 'pdf' | 'pptx';

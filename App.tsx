@@ -53,7 +53,6 @@ import Profile from './src/components/Profile';
 import Settings from './src/components/Settings';
 import StudyRooms from './src/components/StudyRooms';
 import LiveRoom from './src/components/LiveRoom';
-import TestFirebase from './src/components/TestFirebase';
 import useSound from './src/hooks/useSound';
 import { useIntersectionObserver, useCountUp } from './src/hooks/useLandingAnimations';
 import Loader from './src/components/Loader';
@@ -62,7 +61,7 @@ import { useStudyMaterials } from './src/hooks/useStudyMaterials';
 import { trackDownload, trackView } from './src/lib/firestoreService';
 
 // --- Types ---
-type View = 'landing' | 'auth' | 'onboarding' | 'dashboard' | 'pyqs' | 'materials' | 'tools' | 'about' | 'profile' | 'settings' | 'study-rooms' | 'live-room' | 'admin-dashboard' | 'test-firebase';
+type View = 'landing' | 'auth' | 'onboarding' | 'dashboard' | 'pyqs' | 'materials' | 'tools' | 'about' | 'profile' | 'settings' | 'study-rooms' | 'live-room' | 'admin-dashboard';
 type AuthMode = 'signin' | 'signup' | 'admin-login';
 
 interface UserProfile {
@@ -2183,10 +2182,6 @@ export default function App() {
 
       {view === 'admin-dashboard' && (
         <AdminDashboard onLogout={handleLogout} />
-      )}
-
-      {view === 'test-firebase' && (
-        <TestFirebase />
       )}
     </div>
   );
