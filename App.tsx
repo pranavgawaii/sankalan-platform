@@ -1797,23 +1797,26 @@ export default function App() {
   // Redirect to dashboard ONLY if we are in a "public" view (landing/auth)
   // This prevents the loop if we are intentionally logging out (though signOut clears isSignedIn)
   useEffect(() => {
-    if (isLoaded && isSignedIn) {
+    if (isLoaded && isSignedIn && user) {
+      // If user is signed in but on landing/auth/onboarding pages, redirect them appropriately
+      // We check for 'landing' or 'auth' specifically to auto-redirect.
       if (view === 'landing' || view === 'auth') {
-        const isProfileComplete = profile.branch && profile.year && profile.semester;
+        const isProfileComplete = Boolean(profile.branch && profile.year && profile.semester);
 
+        // Update profile name from Clerk if needed
+        if (user.fullName && profile.name !== user.fullName) {
+          setProfile(prev => ({ ...prev, name: user.fullName || prev.name }));
+        }
+
+        // Critical Redirect Logic
         if (isProfileComplete) {
           setView('dashboard');
         } else {
           setView('onboarding');
         }
 
-        // Bypass the cinematic loader for logged-in users (show only for guests on landing)
+        // Ensure loader is dismissed
         setIsLoading(false);
-
-        setProfile(prev => ({
-          ...prev,
-          name: user.fullName || prev.name,
-        }));
       }
     }
   }, [isLoaded, isSignedIn, user, view, profile.branch, profile.year, profile.semester]);
