@@ -1308,10 +1308,9 @@ const HeroSection: React.FC<{ onAuth: (mode: AuthMode) => void; onDemo: () => vo
               </motion.button>
 
               <div className="relative group">
-                <button onClick={onDemo} className="bg-white text-black py-4 px-8 text-xl font-black border-4 border-black hover:bg-gray-50 transition-colors bg-stripes flex items-center gap-2 group-hover:translate-x-1 group-hover:translate-y-1 transition-transform">
+                <button onClick={() => onAuth('signup')} className="bg-white text-black py-4 px-8 text-xl font-black border-4 border-black hover:bg-gray-50 transition-colors bg-stripes flex items-center gap-2 group-hover:translate-x-1 group-hover:translate-y-1 transition-transform">
                   TRY DEMO NOW
                 </button>
-                <div className="absolute top-full left-0 w-full text-center mt-2 opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold uppercase text-gray-500">No Sign-up Required</div>
               </div>
             </motion.div>
           </div>
