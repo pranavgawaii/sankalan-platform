@@ -46,6 +46,7 @@ import {
 } from 'lucide-react';
 import { useSoundContext } from './src/context/SoundContext';
 
+// Force refresh
 import AdminDashboard from './src/components/admin/AdminDashboard';
 import StudyMaterials from './src/components/StudyMaterials';
 import AITools from './src/components/AITools';

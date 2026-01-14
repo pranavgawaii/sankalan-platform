@@ -17,7 +17,16 @@ import {
     Download,
     Filter,
     MoreVertical,
-    ChevronDown
+    ChevronDown,
+    MessageSquare,
+    ExternalLink,
+    Zap,
+    Flag,
+    ThumbsUp,
+    LayoutDashboard,
+    Menu,
+    ChevronRight,
+    Shield
 } from 'lucide-react';
 import {
     LineChart,
@@ -33,7 +42,7 @@ import {
 
 // --- Types ---
 
-type AdminView = 'dashboard' | 'pyqs' | 'users' | 'analytics';
+type AdminView = 'dashboard' | 'pyqs' | 'users' | 'analytics' | 'features';
 
 interface PYQ {
     id: string;
@@ -55,6 +64,16 @@ interface User {
     status: 'Active' | 'Inactive';
 }
 
+interface FeatureRequest {
+    id: string;
+    title: string;
+    description: string;
+    priority: 'Low' | 'Medium' | 'High';
+    status: 'Pending' | 'In Progress' | 'Shipped';
+    votes: number;
+    author: string;
+}
+
 // --- Mock Data ---
 
 const MOCK_PYQS: PYQ[] = [
@@ -73,11 +92,17 @@ const MOCK_USERS: User[] = [
     { id: '5', name: 'Jane Access', email: 'jane@mitadt.ac.in', role: 'Student', branch: 'IT', status: 'Inactive' },
 ];
 
+const MOCK_FEATURE_REQUESTS: FeatureRequest[] = [
+    { id: '1', title: 'Dark Mode for Readers', description: 'Reading PDF at night is hard. Need dark mode.', priority: 'Medium', status: 'In Progress', votes: 45, author: 'Pranav' },
+    { id: '2', title: 'Syllabus Tracker', description: 'Checklist to track completion of units.', priority: 'High', status: 'Pending', votes: 120, author: 'Student A' },
+    { id: '3', title: 'Professor Ratings', description: 'Rate profs anonymously.', priority: 'Low', status: 'Pending', votes: 12, author: 'Anonymous' },
+];
+
 const ACTIVITY_LOG = [
     { id: 1, time: '01:20 AM', user: 'Pranav', action: 'viewed DBMS_2024.pdf' },
     { id: 2, time: '01:15 AM', user: 'System', action: 'Drive sync: 5 new files added' },
     { id: 3, time: '01:10 AM', user: 'John', action: 'uploaded ML_Unit3_notes.pdf' },
-    { id: 4, time: '12:45 AM', user: 'Dr. Smith', action: 'approved CN_Midsem_2024.pdf' },
+    { id: 4, time: 'Dr. Smith', action: 'approved CN_Midsem_2024.pdf' },
 ];
 
 const ANALYTICS_DATA = [
@@ -97,119 +122,139 @@ const SUBJECT_PERFORMANCE = [
     { name: 'ML', views: 600 },
 ];
 
-// --- Reusable Components ---
+// --- Reusable Components (Monochrome Professional) ---
 
-const AdminButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'danger' }> = ({
-    children, className = '', variant = 'primary', ...props
-}) => {
-    const baseStyle = "font-black uppercase tracking-widest border-2 border-black px-4 py-2 transition-all active:translate-y-1 active:translate-x-1 active:shadow-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-xs flex items-center gap-2 justify-center";
+const AdminButton: React.FC<{
+    children: React.ReactNode;
+    onClick?: () => void;
+    className?: string;
+    variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
+}> = ({ children, onClick, className = '', variant = 'primary' }) => {
+    const baseStyles = "px-5 py-2.5 font-bold uppercase text-xs border-2 transition-all active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2 tracking-wide";
+
     const variants = {
-        primary: "bg-black text-white hover:bg-gray-800",
-        secondary: "bg-white text-black hover:bg-gray-50",
-        danger: "bg-red-600 text-white border-red-800 hover:bg-red-700"
+        primary: "bg-black text-white border-black hover:bg-gray-800 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]",
+        secondary: "bg-white text-black border-black hover:bg-gray-50 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]",
+        danger: "bg-white text-red-600 border-red-600 hover:bg-red-50 shadow-[4px_4px_0px_0px_rgba(220,38,38,0.1)]",
+        ghost: "bg-transparent border-transparent hover:bg-gray-100 shadow-none px-3",
     };
 
     return (
-        <button className={`${baseStyle} ${variants[variant]} ${className}`} {...props}>
+        <button className={`${baseStyles} ${variants[variant]} ${className}`} onClick={onClick}>
             {children}
         </button>
     );
 };
 
-const StatCard: React.FC<{ label: string; value: string | number; sublabel: string }> = ({ label, value, sublabel }) => (
-    <div className="bg-white border-4 border-black p-6 flex flex-col items-center justify-center hover:bg-gray-50 transition-colors">
-        <span className="text-4xl font-black tracking-tighter mb-2">{value}</span>
-        <span className="text-xs font-black uppercase tracking-widest text-gray-500 mb-1">{label}</span>
-        <span className="text-[10px] font-bold uppercase tracking-wide opacity-60">{sublabel}</span>
+const StatCard: React.FC<{ value: string | number; label: string; sublabel: string }> = ({ value, label, sublabel }) => (
+    <div className="p-6 border-2 border-black bg-white shadow-sm hover:shadow-md transition-shadow">
+        <div className="flex justify-between items-start mb-4">
+            <h3 className="text-4xl font-black tracking-tighter text-black">{value}</h3>
+            <div className="p-1.5 bg-gray-100 rounded-sm">
+                <BarChart3 size={16} className="text-gray-600" />
+            </div>
+        </div>
+        <div className="space-y-1">
+            <p className="text-xs font-black uppercase tracking-wider text-black">{label}</p>
+            <p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest">{sublabel}</p>
+        </div>
     </div>
 );
 
-// --- Sub-Pages ---
+// --- Sub-Components (Views) ---
 
 const DashboardHome: React.FC<{ setView: (v: AdminView) => void }> = ({ setView }) => {
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
+            <div className="flex flex-col gap-2">
+                <h2 className="text-3xl font-black uppercase tracking-tight">Overview</h2>
+                <p className="text-sm text-gray-500 font-medium">System status and quick actions</p>
+            </div>
+
             {/* Overview Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <StatCard value={524} label="PYQS" sublabel="TOTAL PAPERS" />
-                <StatCard value={156} label="MTLS" sublabel="STUDY NOTES" />
-                <StatCard value="1,245" label="USERS" sublabel="ACTIVE STUDENTS" />
-                <StatCard value="95%" label="SUCCESS" sublabel="PASS RATE" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <StatCard value="524" label="Total PYQs" sublabel="Database Entries" />
+                <StatCard value="156" label="Study Notes" sublabel="Course Materials" />
+                <StatCard value="1.2k" label="Active Users" sublabel="Student Accounts" />
+                <StatCard value="12" label="Pending Req." sublabel="Feature Ideas" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Quick Actions */}
                 <div className="lg:col-span-2 space-y-6">
-                    <h3 className="text-xl font-black uppercase tracking-widest flex items-center gap-2">
-                        <Settings size={20} /> Quick Actions
+                    <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-gray-400">
+                        <Zap size={16} /> Fast Access
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <button onClick={() => setView('pyqs')} className="bg-white border-4 border-black p-6 text-left hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all group">
-                            <Upload size={32} className="mb-4 group-hover:-translate-y-1 transition-transform" />
-                            <h4 className="text-lg font-black uppercase mb-1">UPLOAD PYQ</h4>
-                            <p className="text-xs text-gray-500 font-bold uppercase">Add new paper manually or from drive</p>
+                        <button onClick={() => setView('pyqs')} className="bg-white border-2 border-gray-200 p-6 text-left hover:border-black hover:shadow-md transition-all group relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                <Upload size={64} />
+                            </div>
+                            <Upload size={24} className="mb-4 text-gray-700 group-hover:text-black transition-colors" />
+                            <h4 className="text-sm font-black uppercase mb-1">Upload Paper</h4>
+                            <p className="text-xs text-gray-500">Add PYQ to database</p>
+                            <ChevronRight size={16} className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-1" />
                         </button>
-                        <button onClick={() => alert('Syncing with Google Drive... (Mock)')} className="bg-white border-4 border-black p-6 text-left hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all group">
-                            <RefreshCw size={32} className="mb-4 group-hover:rotate-180 transition-transform duration-500" />
-                            <h4 className="text-lg font-black uppercase mb-1">SYNC DRIVE</h4>
-                            <p className="text-xs text-gray-500 font-bold uppercase">Refresh database from Google Drive</p>
+                        <button onClick={() => alert('Syncing...')} className="bg-white border-2 border-gray-200 p-6 text-left hover:border-black hover:shadow-md transition-all group relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                <RefreshCw size={64} />
+                            </div>
+                            <RefreshCw size={24} className="mb-4 text-gray-700 group-hover:text-black transition-colors" />
+                            <h4 className="text-sm font-black uppercase mb-1">Sync Drive</h4>
+                            <p className="text-xs text-gray-500">Refresh content list</p>
+                            <ChevronRight size={16} className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-1" />
                         </button>
-                        <button onClick={() => alert('Opening Material Uploader...')} className="bg-white border-4 border-black p-6 text-left hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all group">
-                            <FileText size={32} className="mb-4 group-hover:scale-110 transition-transform" />
-                            <h4 className="text-lg font-black uppercase mb-1">ADD MATERIALS</h4>
-                            <p className="text-xs text-gray-500 font-bold uppercase">Upload notes & subject content</p>
+                        <button onClick={() => setView('features')} className="bg-white border-2 border-gray-200 p-6 text-left hover:border-black hover:shadow-md transition-all group relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                <MessageSquare size={64} />
+                            </div>
+                            <MessageSquare size={24} className="mb-4 text-gray-700 group-hover:text-black transition-colors" />
+                            <h4 className="text-sm font-black uppercase mb-1">Feature Requests</h4>
+                            <p className="text-xs text-gray-500">Manage feedback</p>
+                            <ChevronRight size={16} className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-1" />
                         </button>
-                        <button onClick={() => setView('users')} className="bg-white border-4 border-black p-6 text-left hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all group">
-                            <Users size={32} className="mb-4 group-hover:translate-x-1 transition-transform" />
-                            <h4 className="text-lg font-black uppercase mb-1">MANAGE USERS</h4>
-                            <p className="text-xs text-gray-500 font-bold uppercase">View and moderate user accounts</p>
+                        <button onClick={() => setView('users')} className="bg-white border-2 border-gray-200 p-6 text-left hover:border-black hover:shadow-md transition-all group relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                <Users size={64} />
+                            </div>
+                            <Users size={24} className="mb-4 text-gray-700 group-hover:text-black transition-colors" />
+                            <h4 className="text-sm font-black uppercase mb-1">User Control</h4>
+                            <p className="text-xs text-gray-500">Moderate accounts</p>
+                            <ChevronRight size={16} className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-1" />
                         </button>
                     </div>
                 </div>
 
                 {/* Recent Activity */}
                 <div className="space-y-6">
-                    <h3 className="text-xl font-black uppercase tracking-widest flex items-center gap-2">
-                        <Eye size={20} /> Recent Activity
+                    <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-gray-400">
+                        <Eye size={16} /> Audit Log
                     </h3>
-                    <div className="bg-white border-4 border-black p-0">
+                    <div className="bg-white border-2 border-black p-0">
                         {ACTIVITY_LOG.map((log, i) => (
-                            <div key={log.id} className="p-4 border-b-2 border-black last:border-b-0 hover:bg-gray-50">
-                                <div className="flex justify-between items-start mb-1">
-                                    <span className="text-[10px] font-black bg-black text-white px-1">{log.time}</span>
-                                    <span className="text-[10px] font-bold uppercase text-gray-500">{log.user}</span>
+                            <div key={log.id} className="p-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors flex gap-3 items-start">
+                                <div className="mt-1 w-2 h-2 rounded-full bg-black shrink-0"></div>
+                                <div>
+                                    <p className="text-[10px] font-bold uppercase text-gray-400 mb-0.5">{log.time} • {log.user}</p>
+                                    <p className="text-xs font-bold leading-tight">{log.action}</p>
                                 </div>
-                                <p className="text-xs font-bold uppercase leading-tight">{log.action}</p>
                             </div>
                         ))}
-                        <button className="w-full p-3 text-xs font-black uppercase hover:bg-gray-100 flex items-center justify-center gap-2">
-                            View Full Log <Users size={12} />
-                        </button>
+                        <button className="w-full p-3 text-[10px] font-black uppercase hover:bg-gray-50 border-t border-gray-100 text-center">View Full Log</button>
                     </div>
 
                     {/* Pending Approvals Mini-Widget */}
-                    <div className="bg-yellow-50 border-4 border-black p-4 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 bg-red-600 text-white text-[10px] font-black px-2 py-1">2 PENDING</div>
-                        <h4 className="text-sm font-black uppercase mb-4 mt-2">Pending Approvals</h4>
-                        <div className="space-y-3">
-                            <div className="bg-white border-2 border-black p-2 flex justify-between items-center">
-                                <div>
-                                    <p className="text-[10px] font-black uppercase truncate w-32">ML_2024_Q10_Sol</p>
-                                    <p className="text-[8px] font-bold uppercase text-gray-500">Student Upload</p>
-                                </div>
+                    <div className="bg-gray-50 border-2 border-dashed border-gray-300 p-4">
+                        <div className="flex justify-between items-center mb-4">
+                            <h4 className="text-xs font-black uppercase text-gray-600">Pending Actions</h4>
+                            <span className="bg-black text-white text-[10px] font-bold px-1.5 py-0.5 rounded-sm">2</span>
+                        </div>
+                        <div className="space-y-2">
+                            <div className="bg-white border border-gray-200 p-2 flex justify-between items-center">
+                                <span className="text-[10px] font-bold uppercase truncate w-32">ML_2024_Q10_Sol</span>
                                 <div className="flex gap-1">
-                                    <button className="p-1 hover:bg-green-100 border border-black"><CheckCircle2 size={12} className="text-green-600" /></button>
-                                    <button className="p-1 hover:bg-red-100 border border-black"><X size={12} className="text-red-600" /></button>
-                                </div>
-                            </div>
-                            <div className="bg-white border-2 border-black p-2 flex justify-between items-center">
-                                <div>
-                                    <p className="text-[10px] font-black uppercase truncate w-32">DBMS_Unit3_Notes</p>
-                                    <p className="text-[8px] font-bold uppercase text-gray-500">Faculty Upload</p>
-                                </div>
-                                <div className="flex gap-1">
-                                    <button className="p-1 hover:bg-green-100 border border-black"><CheckCircle2 size={12} className="text-green-600" /></button>
-                                    <button className="p-1 hover:bg-red-100 border border-black"><X size={12} className="text-red-600" /></button>
+                                    <button className="p-1 hover:bg-black hover:text-white border border-gray-200 transition-colors"><CheckCircle2 size={10} /></button>
+                                    <button className="p-1 hover:bg-red-600 hover:text-white border border-gray-200 transition-colors"><X size={10} /></button>
                                 </div>
                             </div>
                         </div>
@@ -220,84 +265,164 @@ const DashboardHome: React.FC<{ setView: (v: AdminView) => void }> = ({ setView 
     );
 };
 
+const FeatureRequestsView: React.FC = () => {
+    return (
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4 border-b-2 border-gray-200 pb-6">
+                <div>
+                    <h2 className="text-3xl font-black uppercase tracking-tight mb-1">Feature Control</h2>
+                    <p className="text-sm text-gray-500 font-medium tracking-wide">Manage and prioritize user feedback</p>
+                </div>
+                <div className="flex gap-4">
+                    <AdminButton onClick={() => alert('Manually add feature logic')}><Zap size={14} /> Log Request</AdminButton>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {MOCK_FEATURE_REQUESTS.map((req) => (
+                    <div key={req.id} className="bg-white border-2 border-gray-200 hover:border-black p-6 flex flex-col justify-between transition-all group hover:shadow-lg">
+                        <div>
+                            <div className="flex justify-between items-start mb-4">
+                                <span className={`px-2 py-0.5 text-[10px] font-bold uppercase border border-gray-200 ${req.priority === 'High' ? 'bg-black text-white border-black' :
+                                        'bg-white text-gray-600'
+                                    }`}>{req.priority}</span>
+                                <span className="text-[10px] font-bold uppercase text-gray-400">{req.status}</span>
+                            </div>
+                            <h3 className="text-lg font-black uppercase leading-tight mb-2 group-hover:underline decoration-2 underline-offset-4">{req.title}</h3>
+                            <p className="text-xs text-gray-500 mb-6 leading-relaxed font-medium">{req.description}</p>
+                        </div>
+
+                        <div className="pt-4 border-t border-gray-100">
+                            <div className="flex justify-between items-center mb-4">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center"><Users size={10} /></div>
+                                    <span className="text-[10px] font-bold uppercase text-gray-500">{req.author}</span>
+                                </div>
+                                <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1"><ThumbsUp size={10} /> {req.votes}</span>
+                            </div>
+                            <div className="flex gap-2">
+                                <button className="flex-1 py-2 bg-black text-white text-[10px] font-bold uppercase hover:bg-gray-800 transition-colors">Approve</button>
+                                <button className="flex-1 py-2 bg-white border border-gray-200 text-black text-[10px] font-bold uppercase hover:bg-gray-50 transition-colors">Dismiss</button>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 const ManagePYQs: React.FC = () => {
     const [showUpload, setShowUpload] = useState(false);
     const [filter, setFilter] = useState('');
+    const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
     const filteredPYQs = MOCK_PYQS.filter(p =>
         p.subject.toLowerCase().includes(filter.toLowerCase()) ||
         p.type.toLowerCase().includes(filter.toLowerCase())
     );
 
+    const toggleSelection = (id: string) => {
+        setSelectedItems(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+    };
+
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4 border-b-2 border-gray-200 pb-6">
                 <div>
-                    <h2 className="text-4xl font-black uppercase tracking-tighter mb-2">Manage PYQs</h2>
-                    <p className="text-sm font-bold uppercase text-gray-500 tracking-widest">Database Content Control</p>
+                    <h2 className="text-3xl font-black uppercase tracking-tight mb-1">Database</h2>
+                    <p className="text-sm text-gray-500 font-medium tracking-wide">Manage Previous Year Questions</p>
                 </div>
-                <div className="flex gap-4">
-                    <AdminButton onClick={() => setShowUpload(true)}><Upload size={16} /> Upload New PYQ</AdminButton>
-                    <AdminButton variant="secondary" onClick={() => alert('Drive Sync Initiated')}><RefreshCw size={16} /> Sync Drive</AdminButton>
+                <div className="flex gap-3">
+                    <AdminButton variant="secondary" onClick={() => alert('Drive Sync Initiated')}><RefreshCw size={14} /> Sync</AdminButton>
+                    <AdminButton onClick={() => setShowUpload(true)}><Upload size={14} /> Upload</AdminButton>
                 </div>
             </div>
 
-            <div className="bg-white border-4 border-black p-4 mb-6 flex flex-wrap gap-4 items-center">
-                <div className="flex items-center gap-2 border-2 border-black px-2 py-1 bg-gray-50">
-                    <Filter size={14} />
-                    <span className="text-[10px] font-black uppercase">FILTERS:</span>
+            <div className="bg-white border-2 border-black p-4 mb-6 flex flex-wrap gap-4 items-center">
+                <div className="flex items-center gap-2 px-2 py-1 bg-gray-100 rounded-sm">
+                    <Filter size={14} className="text-gray-500" />
+                    <span className="text-[10px] font-black uppercase text-gray-500">FILTER BY:</span>
                 </div>
                 {['BRANCH', 'SEM', 'SUBJECT', 'YEAR'].map(f => (
                     <div key={f} className="relative group">
-                        <button className="text-xs font-bold uppercase flex items-center gap-1 hover:underline">
+                        <button className="text-xs font-bold uppercase flex items-center gap-1 hover:text-gray-600 transition-colors">
                             {f} <ChevronDown size={12} />
                         </button>
                     </div>
                 ))}
                 <div className="flex-1"></div>
                 <div className="relative w-full md:w-64">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-50" />
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                         type="text"
-                        placeholder="SEARCH..."
+                        placeholder="SEARCH PAPERS..."
                         value={filter}
                         onChange={(e) => setFilter(e.target.value)}
-                        className="w-full pl-9 pr-2 py-2 border-2 border-black text-xs font-bold uppercase focus:outline-none focus:bg-gray-50"
+                        className="w-full pl-9 pr-2 py-2 border border-gray-300 text-xs font-bold uppercase focus:outline-none focus:border-black transition-colors"
                     />
                 </div>
             </div>
 
-            <div className="overflow-x-auto border-4 border-black">
+            {selectedItems.length > 0 && (
+                <div className="bg-gray-900 text-white p-3 mb-4 flex justify-between items-center animate-in slide-in-from-top-2 rounded-sm">
+                    <span className="text-xs font-bold uppercase tracking-wide px-2">{selectedItems.length} selected</span>
+                    <div className="flex gap-4">
+                        <button className="text-[10px] font-bold uppercase hover:text-red-300 flex items-center gap-1 transition-colors"><Trash2 size={12} /> DELETE</button>
+                        <button className="text-[10px] font-bold uppercase hover:text-green-300 flex items-center gap-1 transition-colors"><CheckCircle2 size={12} /> PUBLISH</button>
+                    </div>
+                </div>
+            )}
+
+            <div className="border border-gray-200 bg-white">
                 <table className="w-full text-left border-collapse">
                     <thead>
-                        <tr className="bg-black text-white uppercase text-xs font-black tracking-wider">
-                            <th className="p-4 border-b-4 border-black w-10">✓</th>
-                            <th className="p-4 border-b-4 border-black">Subject</th>
-                            <th className="p-4 border-b-4 border-black">Sem</th>
-                            <th className="p-4 border-b-4 border-black">Type</th>
-                            <th className="p-4 border-b-4 border-black">Year</th>
-                            <th className="p-4 border-b-4 border-black">Status</th>
-                            <th className="p-4 border-b-4 border-black text-right">Actions</th>
+                        <tr className="bg-gray-50 text-gray-500 uppercase text-[10px] font-black tracking-wider border-b border-gray-200">
+                            <th className="p-4 w-10">
+                                <input
+                                    type="checkbox"
+                                    className="accent-black h-3.5 w-3.5 cursor-pointer"
+                                    onChange={(e) => setSelectedItems(e.target.checked ? filteredPYQs.map(p => p.id) : [])}
+                                    checked={selectedItems.length === filteredPYQs.length && filteredPYQs.length > 0}
+                                />
+                            </th>
+                            <th className="p-4">Subject</th>
+                            <th className="p-4">Details</th>
+                            <th className="p-4">Type</th>
+                            <th className="p-4">Status</th>
+                            <th className="p-4 text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="bg-white text-xs font-bold uppercase">
+                    <tbody className="text-xs font-bold text-gray-800">
                         {filteredPYQs.map((pyq) => (
-                            <tr key={pyq.id} className="hover:bg-gray-50 border-b-2 border-gray-100 last:border-b-0">
-                                <td className="p-4 border-r-2 border-black"><input type="checkbox" className="accent-black" /></td>
-                                <td className="p-4">{pyq.subject}</td>
-                                <td className="p-4">{pyq.semester}</td>
-                                <td className="p-4">{pyq.type}</td>
-                                <td className="p-4">{pyq.year}</td>
+                            <tr key={pyq.id} className={`border-b border-gray-100 last:border-b-0 transition-colors ${selectedItems.includes(pyq.id) ? 'bg-gray-50' : 'hover:bg-gray-50'}`}>
                                 <td className="p-4">
-                                    <span className={`px-2 py-1 border border-black text-[10px] ${pyq.status === 'Published' ? 'bg-green-100' : 'bg-yellow-100'}`}>
+                                    <input
+                                        type="checkbox"
+                                        className="accent-black h-3.5 w-3.5 cursor-pointer"
+                                        checked={selectedItems.includes(pyq.id)}
+                                        onChange={() => toggleSelection(pyq.id)}
+                                    />
+                                </td>
+                                <td className="p-4 font-black">{pyq.subject}</td>
+                                <td className="p-4 text-gray-500">Sem {pyq.semester} • {pyq.year}</td>
+                                <td className="p-4">
+                                    <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-[10px] border border-gray-200">{pyq.type}</span>
+                                </td>
+                                <td className="p-4">
+                                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] uppercase tracking-wide border ${pyq.status === 'Published'
+                                            ? 'bg-white border-green-600 text-green-700'
+                                            : 'bg-white border-yellow-500 text-yellow-700'
+                                        }`}>
+                                        <div className={`w-1.5 h-1.5 rounded-full ${pyq.status === 'Published' ? 'bg-green-600' : 'bg-yellow-500'}`}></div>
                                         {pyq.status}
                                     </span>
                                 </td>
                                 <td className="p-4 text-right">
-                                    <div className="flex justify-end gap-2">
-                                        <button className="p-1 hover:bg-blue-100 border border-black transition-colors"><Edit size={14} /></button>
-                                        <button className="p-1 hover:bg-red-100 border border-black transition-colors"><Trash2 size={14} /></button>
-                                        <button className="p-1 hover:bg-gray-100 border border-black transition-colors"><Eye size={14} /></button>
+                                    <div className="flex justify-end gap-2 text-gray-400">
+                                        <button className="hover:text-black transition-colors"><Edit size={14} /></button>
+                                        <button className="hover:text-red-600 transition-colors"><Trash2 size={14} /></button>
+                                        <button className="hover:text-black transition-colors"><Download size={14} /></button>
                                     </div>
                                 </td>
                             </tr>
@@ -306,52 +431,20 @@ const ManagePYQs: React.FC = () => {
                 </table>
             </div>
 
-            <div className="mt-4 flex justify-between items-center text-xs font-black uppercase text-gray-500">
-                <div className="flex gap-2">
-                    <button onClick={() => alert('Delete function disabled in demo')} className="text-red-600 hover:underline flex items-center gap-1"><Trash2 size={12} /> Bulk Delete</button>
-                    <button onClick={() => alert('Downloading CSV...')} className="hover:underline flex items-center gap-1"><Download size={12} /> Export CSV</button>
-                </div>
-                <span>Showing {filteredPYQs.length} of {MOCK_PYQS.length}</span>
-            </div>
-
-            {/* Upload Modal */}
+            {/* Upload Modal (Existing code reused) */}
             {showUpload && (
-                <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white border-8 border-black w-full max-w-lg p-8 shadow-[16px_16px_0px_0px_rgba(255,255,255,0.2)]">
-                        <h3 className="text-2xl font-black uppercase mb-6 flex items-center gap-2">
-                            <Upload size={24} /> Upload New PYQ
+                <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white border-2 border-black w-full max-w-lg p-8 shadow-xl">
+                        <h3 className="text-xl font-black uppercase mb-6 flex items-center gap-2">
+                            Upload Paper
                         </h3>
-
-                        <div className="border-4 border-dashed border-gray-300 hover:border-black p-12 mb-6 text-center cursor-pointer transition-colors group bg-gray-50">
-                            <FileText size={48} className="mx-auto mb-4 text-gray-400 group-hover:text-black transition-colors" />
-                            <p className="font-black uppercase text-sm mb-1">Drag PDF Here</p>
-                            <p className="text-[10px] font-bold uppercase text-gray-500">or click to browse</p>
+                        <div className="border-2 border-dashed border-gray-300 hover:border-black p-12 mb-6 text-center cursor-pointer transition-colors group bg-gray-50 rounded-sm">
+                            <FileText size={32} className="mx-auto mb-4 text-gray-400 group-hover:text-black transition-colors" />
+                            <p className="font-bold uppercase text-xs text-gray-600 mb-1">Drag PDF Here</p>
                         </div>
-
-                        <div className="space-y-4 mb-8">
-                            <div className="p-3 bg-blue-50 border-2 border-black flex items-start gap-3">
-                                <div className="bg-black text-white p-1 rounded-sm text-[10px]">AUTO</div>
-                                <div>
-                                    <p className="text-[10px] font-black uppercase text-blue-800">Detected from filename:</p>
-                                    <p className="text-xs font-bold font-mono">CSE_SEM5_DBMS_Endsem_2024.pdf</p>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase">Subject</label>
-                                    <input type="text" value="DBMS" className="w-full border-2 border-black p-2 text-xs font-bold uppercase" readOnly />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase">Year</label>
-                                    <input type="text" value="2024" className="w-full border-2 border-black p-2 text-xs font-bold uppercase" readOnly />
-                                </div>
-                            </div>
-                        </div>
-
                         <div className="flex gap-4">
-                            <AdminButton variant="secondary" className="flex-1" onClick={() => setShowUpload(false)}>Cancel</AdminButton>
-                            <AdminButton className="flex-1" onClick={() => { alert('Upload simulated'); setShowUpload(false); }}>Upload PYQ →</AdminButton>
+                            <AdminButton variant="ghost" className="flex-1" onClick={() => setShowUpload(false)}>Cancel</AdminButton>
+                            <AdminButton className="flex-1" onClick={() => { alert('Upload simulated'); setShowUpload(false); }}>Confirm Upload</AdminButton>
                         </div>
                     </div>
                 </div>
@@ -363,65 +456,69 @@ const ManagePYQs: React.FC = () => {
 const ManageUsers: React.FC = () => {
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4 border-b-2 border-gray-200 pb-6">
                 <div>
-                    <h2 className="text-4xl font-black uppercase tracking-tighter mb-2">Manage Users</h2>
-                    <p className="text-sm font-bold uppercase text-gray-500 tracking-widest">Role & Access Control</p>
+                    <h2 className="text-3xl font-black uppercase tracking-tight mb-1">Users</h2>
+                    <p className="text-sm text-gray-500 font-medium tracking-wide">directory & access management</p>
                 </div>
-                <div className="flex gap-4">
-                    <AdminButton onClick={() => alert('Opens User Creation Modal')}><Users size={16} /> Add User</AdminButton>
-                    <AdminButton variant="secondary" onClick={() => alert('Exporting User List...')}><Download size={16} /> Export List</AdminButton>
+                <div className="flex gap-3">
+                    <AdminButton variant="secondary" onClick={() => alert('Exporting...')}><Download size={14} /> Export</AdminButton>
+                    <AdminButton onClick={() => alert('New User')}><Users size={14} /> Add User</AdminButton>
                 </div>
             </div>
 
-            <div className="bg-white border-4 border-black p-4 mb-6 flex flex-wrap gap-4 items-center">
-                <div className="flex items-center gap-2 border-2 border-black px-2 py-1 bg-gray-50">
-                    <Filter size={14} />
-                    <span className="text-[10px] font-black uppercase">FILTERS:</span>
+            <div className="bg-white border-2 border-black p-4 mb-6 flex flex-wrap gap-4 items-center">
+                <div className="flex items-center gap-2 px-2 py-1 bg-gray-100 rounded-sm">
+                    <Filter size={14} className="text-gray-500" />
+                    <span className="text-[10px] font-black uppercase text-gray-500">FILTER BY:</span>
                 </div>
-                <div className="relative group"><button className="text-xs font-bold uppercase flex items-center gap-1 hover:underline">ROLE <ChevronDown size={12} /></button></div>
-                <div className="relative group"><button className="text-xs font-bold uppercase flex items-center gap-1 hover:underline">BRANCH <ChevronDown size={12} /></button></div>
-                <div className="relative group"><button className="text-xs font-bold uppercase flex items-center gap-1 hover:underline">STATUS <ChevronDown size={12} /></button></div>
+                <div className="relative group"><button className="text-xs font-bold uppercase flex items-center gap-1 hover:text-gray-600 transition-colors">ROLE <ChevronDown size={12} /></button></div>
                 <div className="flex-1"></div>
                 <div className="relative w-full md:w-64">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-50" />
-                    <input type="text" placeholder="SEARCH NAME..." className="w-full pl-9 pr-2 py-2 border-2 border-black text-xs font-bold uppercase focus:outline-none focus:bg-gray-50" />
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input type="text" placeholder="SEARCH USERS..." className="w-full pl-9 pr-2 py-2 border border-gray-300 text-xs font-bold uppercase focus:outline-none focus:border-black transition-colors" />
                 </div>
             </div>
 
-            <div className="overflow-x-auto border-4 border-black bg-white">
+            <div className="border border-gray-200 bg-white">
                 <table className="w-full text-left border-collapse">
                     <thead>
-                        <tr className="bg-black text-white uppercase text-xs font-black tracking-wider">
-                            <th className="p-4 border-b-4 border-black">Name</th>
-                            <th className="p-4 border-b-4 border-black">Email</th>
-                            <th className="p-4 border-b-4 border-black">Role</th>
-                            <th className="p-4 border-b-4 border-black">Branch</th>
-                            <th className="p-4 border-b-4 border-black">Status</th>
-                            <th className="p-4 border-b-4 border-black text-right">Actions</th>
+                        <tr className="bg-gray-50 text-gray-500 uppercase text-[10px] font-black tracking-wider border-b border-gray-200">
+                            <th className="p-4">User Details</th>
+                            <th className="p-4">Role</th>
+                            <th className="p-4">Branch</th>
+                            <th className="p-4">Status</th>
+                            <th className="p-4 text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="bg-white text-xs font-bold uppercase">
+                    <tbody className="text-xs font-bold text-gray-800">
                         {MOCK_USERS.map((user) => (
-                            <tr key={user.id} className="hover:bg-gray-50 border-b-2 border-gray-100 last:border-b-0">
-                                <td className="p-4 font-black">{user.name}</td>
-                                <td className="p-4 normal-case text-gray-600">{user.email}</td>
+                            <tr key={user.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors group">
                                 <td className="p-4">
-                                    <span className={`px-2 py-1 border border-black text-[10px] ${user.role === 'Admin' ? 'bg-purple-100' : user.role === 'Faculty' ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                                    <div className="font-black text-sm">{user.name}</div>
+                                    <div className="normal-case text-gray-500 font-medium">{user.email}</div>
+                                </td>
+                                <td className="p-4">
+                                    <span className={`px-2 py-0.5 border text-[10px] font-bold uppercase inline-flex items-center gap-1 rounded-full ${user.role === 'Admin' ? 'bg-black text-white border-black' :
+                                            user.role === 'Faculty' ? 'bg-gray-100 text-black border-gray-300' : 'bg-white text-gray-500 border-gray-200'
+                                        }`}>
                                         {user.role}
                                     </span>
                                 </td>
-                                <td className="p-4">{user.branch}</td>
+                                <td className="p-4 text-gray-600">{user.branch}</td>
                                 <td className="p-4">
-                                    <span className={`flex items-center gap-1 ${user.status === 'Active' ? 'text-green-600' : 'text-red-600'}`}>
-                                        <div className={`w-2 h-2 rounded-full ${user.status === 'Active' ? 'bg-green-600' : 'bg-red-600'}`}></div>
+                                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] uppercase tracking-wide border rounded-full ${user.status === 'Active'
+                                            ? 'bg-white border-gray-200 text-green-700'
+                                            : 'bg-white border-gray-200 text-red-700'
+                                        }`}>
+                                        <div className={`w-1.5 h-1.5 rounded-full ${user.status === 'Active' ? 'bg-green-600' : 'bg-red-600'}`}></div>
                                         {user.status}
                                     </span>
                                 </td>
                                 <td className="p-4 text-right">
-                                    <div className="flex justify-end gap-2">
-                                        <button className="p-1 hover:bg-black hover:text-white border border-black transition-all"><Edit size={14} /></button>
-                                        {user.role !== 'Admin' && <button className="p-1 hover:bg-red-600 hover:text-white border border-black transition-all"><Trash2 size={14} /></button>}
+                                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button className="p-1 hover:bg-black hover:text-white rounded-sm transition-colors"><Edit size={14} /></button>
+                                        <button className="p-1 hover:bg-red-600 hover:text-white rounded-sm transition-colors"><Trash2 size={14} /></button>
                                     </div>
                                 </td>
                             </tr>
@@ -436,138 +533,170 @@ const ManageUsers: React.FC = () => {
 const AnalyticsView: React.FC = () => {
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
-            <div className="flex justify-between items-end">
+            <div className="flex flex-col md:flex-row justify-between items-end gap-4 border-b-2 border-gray-200 pb-6">
                 <div>
-                    <h2 className="text-4xl font-black uppercase tracking-tighter mb-2">System Analytics</h2>
-                    <p className="text-sm font-bold uppercase text-gray-500 tracking-widest">Performance & Usage Metrics</p>
+                    <h2 className="text-3xl font-black uppercase tracking-tight mb-1">Metrics</h2>
+                    <p className="text-sm text-gray-500 font-medium tracking-wide">System performance & usage</p>
                 </div>
-                <div className="flex items-center gap-2 border-2 border-black px-3 py-2 bg-white">
-                    <span className="text-[10px] font-black uppercase">LAST 7 DAYS</span>
-                    <ChevronDown size={14} />
+                <div className="flex items-center gap-4">
+                    <a
+                        href="https://vercel.com/dashboard"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-2 bg-black text-white px-4 py-2 border border-black hover:bg-gray-800 transition-colors font-bold uppercase text-xs"
+                    >
+                        <ExternalLink size={14} /> Open Vercel
+                    </a>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Daily Active Users Chart */}
-                <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-                    <h3 className="text-xl font-black uppercase mb-6 flex items-center gap-2">
-                        <Users size={20} /> Daily Active Users
+                <div className="bg-white border-2 border-black p-6">
+                    <h3 className="text-sm font-black uppercase mb-6 flex items-center gap-2 text-gray-500">
+                        <Users size={16} /> Daily Active Users
                     </h3>
                     <div className="h-64 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={ANALYTICS_DATA}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                                <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold' }} />
-                                <YAxis tick={{ fontSize: 10, fontWeight: 'bold' }} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold' }} stroke="#999" />
+                                <YAxis tick={{ fontSize: 10, fontWeight: 'bold' }} stroke="#999" />
                                 <Tooltip
-                                    contentStyle={{ border: '2px solid black', borderRadius: '0', boxShadow: '4px 4px 0px 0px rgba(0,0,0,1)' }}
-                                    itemStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}
+                                    contentStyle={{ border: '2px solid black', borderRadius: '0', boxShadow: 'none' }}
+                                    itemStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', color: 'black' }}
                                 />
-                                <Line type="monotone" dataKey="users" stroke="#000" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6, strokeWidth: 2 }} />
+                                <Line type="monotone" dataKey="users" stroke="#000" strokeWidth={2} dot={{ r: 3, fill: 'black' }} activeDot={{ r: 5, strokeWidth: 0 }} />
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
                 {/* Top Subjects Bar Chart */}
-                <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-                    <h3 className="text-xl font-black uppercase mb-6 flex items-center gap-2">
-                        <BarChart3 size={20} /> Top Performing Subjects
+                <div className="bg-white border-2 border-black p-6">
+                    <h3 className="text-sm font-black uppercase mb-6 flex items-center gap-2 text-gray-500">
+                        <BarChart3 size={16} /> Top Subjects
                     </h3>
                     <div className="h-64 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={SUBJECT_PERFORMANCE}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                                <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold' }} />
-                                <YAxis tick={{ fontSize: 10, fontWeight: 'bold' }} />
-                                <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ border: '2px solid black', borderRadius: '0', boxShadow: '4px 4px 0px 0px rgba(0,0,0,1)' }} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold' }} stroke="#999" />
+                                <YAxis tick={{ fontSize: 10, fontWeight: 'bold' }} stroke="#999" />
+                                <Tooltip cursor={{ fill: '#f9f9f9' }} contentStyle={{ border: '2px solid black', borderRadius: '0' }} />
                                 <Bar dataKey="views" fill="#000" />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
             </div>
-
-            {/* Additional Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-black text-white p-6 border-4 border-black">
-                    <h4 className="text-sm font-black uppercase opacity-60 mb-2">AI Mock Tests Generated</h4>
-                    <p className="text-5xl font-black tracking-tighter">1,240</p>
-                    <p className="text-xs font-bold mt-4 uppercase">↑ 12% from last week</p>
-                </div>
-                <div className="bg-white text-black p-6 border-4 border-black">
-                    <h4 className="text-sm font-black uppercase opacity-60 mb-2">Avg. Completion Rate</h4>
-                    <p className="text-5xl font-black tracking-tighter">85%</p>
-                    <p className="text-xs font-bold mt-4 uppercase text-green-600">Excellent Engagement</p>
-                </div>
-                <div className="bg-white text-black p-6 border-4 border-black">
-                    <h4 className="text-sm font-black uppercase opacity-60 mb-2">Total Questions Solved</h4>
-                    <p className="text-5xl font-black tracking-tighter">24.8k</p>
-                    <p className="text-xs font-bold mt-4 uppercase">Across all branches</p>
-                </div>
-            </div>
         </div>
     );
 };
 
-// --- Main Admin Dashboard Controller ---
+// --- Main Admin Dashboard Controller (Sidebar Layout) ---
 
 const AdminDashboard: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
     const [view, setView] = useState<AdminView>('dashboard');
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    const NAV_ITEMS = [
+        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'pyqs', label: 'PYQ Database', icon: FileText },
+        { id: 'users', label: 'User Directory', icon: Users },
+        { id: 'features', label: 'Feature Request', icon: MessageSquare },
+        { id: 'analytics', label: 'System Stats', icon: BarChart3 }
+    ];
 
     return (
-        <div className="min-h-screen bg-[#F0F0F0] font-mono">
-            {/* Admin Navbar */}
-            <nav className="sticky top-0 z-50 bg-black text-white border-b-4 border-white">
-                <div className="container mx-auto px-4">
-                    <div className="flex items-center justify-between h-16">
-                        <div className="flex items-center gap-3 cursor-pointer" onClick={() => setView('dashboard')}>
-                            <div className="bg-white text-black p-1"><Settings size={20} /></div>
-                            <span className="text-xl font-black uppercase tracking-tighter">SANKALAN <span className="opacity-50">ADMIN</span></span>
-                        </div>
+        <div className="min-h-screen bg-[#FAFAFA] font-sans flex text-black selection:bg-black selection:text-white">
+            {/* Sidebar Navigation (Desktop) */}
+            <aside className="hidden md:flex w-64 flex-col border-r-2 border-black bg-white fixed h-full z-20">
+                <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                    <div>
+                        <h1 className="text-xl font-black uppercase tracking-tighter leading-none">Sankalan</h1>
+                        <span className="text-[10px] font-bold text-gray-400 tracking-widest">ADMIN CONSOLE</span>
+                    </div>
+                    <Shield size={20} className="text-black" />
+                </div>
 
-                        <div className="hidden md:flex items-center gap-1">
-                            {[
-                                { id: 'dashboard', label: 'DASHBOARD' },
-                                { id: 'pyqs', label: 'PYQS' },
-                                { id: 'users', label: 'USERS' },
-                                { id: 'analytics', label: 'STATS' }
-                            ].map((item) => (
-                                <button
-                                    key={item.id}
-                                    onClick={() => setView(item.id as AdminView)}
-                                    className={`px-4 py-2 text-xs font-black uppercase tracking-widest transition-colors ${view === item.id ? 'bg-white text-black' : 'hover:bg-gray-800'}`}
-                                >
-                                    {item.label}
-                                </button>
-                            ))}
-                        </div>
+                <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+                    {NAV_ITEMS.map((item) => (
+                        <button
+                            key={item.id}
+                            onClick={() => setView(item.id as AdminView)}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 font-bold text-xs uppercase transition-all rounded-sm ${view === item.id
+                                    ? 'bg-black text-white hover:bg-gray-800'
+                                    : 'text-gray-500 hover:bg-gray-50 hover:text-black'
+                                }`}
+                        >
+                            <item.icon size={16} />
+                            {item.label}
+                        </button>
+                    ))}
+                </nav>
 
-                        <div className="flex items-center gap-4">
-                            <span className="text-[10px] font-bold uppercase hidden sm:block opacity-60">admin@mitadt.ac.in</span>
-                            <button
-                                onClick={onLogout}
-                                className="bg-red-600 text-white p-2 border-2 border-white hover:bg-red-700 transition-colors"
-                                title="Logout"
-                            >
-                                <LogOut size={16} />
-                            </button>
+                <div className="p-4 border-t border-gray-100">
+                    <div className="flex items-center gap-3 mb-4 px-2">
+                        <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-black">
+                            <span className="font-black text-xs">AD</span>
+                        </div>
+                        <div className="overflow-hidden">
+                            <p className="text-xs font-black uppercase truncate">Administrator</p>
+                            <p className="text-[10px] font-medium text-gray-400 truncate">Super User Access</p>
                         </div>
                     </div>
+                    <button
+                        onClick={onLogout}
+                        className="w-full flex items-center justify-center gap-2 border border-gray-200 text-black p-2 font-bold uppercase text-xs hover:bg-gray-50 transition-colors"
+                    >
+                        <LogOut size={14} /> Sign Out
+                    </button>
                 </div>
-            </nav>
+            </aside>
 
-            <main className="container mx-auto px-4 py-8 max-w-7xl">
-                {/* Dynamic Content */}
-                {view === 'dashboard' && <DashboardHome setView={setView} />}
-                {view === 'pyqs' && <ManagePYQs />}
-                {view === 'users' && <ManageUsers />}
-                {view === 'analytics' && <AnalyticsView />}
+            {/* Mobile Header */}
+            <div className="md:hidden fixed top-0 w-full bg-white border-b border-gray-200 z-30 p-4 flex justify-between items-center shadow-sm">
+                <span className="font-black uppercase tracking-tighter text-lg">Sankalan Admin</span>
+                <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+                    {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                </button>
+            </div>
+
+            {/* Mobile Menu Overlay */}
+            {isMobileMenuOpen && (
+                <div className="fixed inset-0 bg-white z-20 pt-20 px-4 pb-4 md:hidden flex flex-col gap-2">
+                    {NAV_ITEMS.map((item) => (
+                        <button
+                            key={item.id}
+                            onClick={() => { setView(item.id as AdminView); setIsMobileMenuOpen(false); }}
+                            className={`w-full flex items-center gap-3 px-4 py-4 font-black uppercase text-sm border-b border-gray-100 ${view === item.id ? 'text-black' : 'text-gray-400'
+                                }`}
+                        >
+                            <item.icon size={20} />
+                            {item.label}
+                        </button>
+                    ))}
+                    <button onClick={onLogout} className="mt-auto w-full bg-black text-white p-4 font-black uppercase text-sm">
+                        SIGN OUT
+                    </button>
+                </div>
+            )}
+
+            {/* Main Content Area */}
+            <main className="flex-1 md:ml-64 p-4 md:p-10 pt-24 md:pt-10 min-h-screen overflow-x-hidden bg-[#FAFAFA]">
+                <div className="max-w-6xl mx-auto">
+                    {view === 'dashboard' && <DashboardHome setView={setView} />}
+                    {view === 'pyqs' && <ManagePYQs />}
+                    {view === 'users' && <ManageUsers />}
+                    {view === 'features' && <FeatureRequestsView />}
+                    {view === 'analytics' && <AnalyticsView />}
+                </div>
+
+                <footer className="text-center py-8 text-[10px] font-bold uppercase text-gray-300 mt-12">
+                    System v2.1 • Authorized Access Only
+                </footer>
             </main>
-
-            <footer className="text-center py-8 text-[10px] font-bold uppercase text-gray-400">
-                Admin Console v1.0 • Restricted Access • Authorized Personnel Only
-            </footer>
         </div>
     );
 };
