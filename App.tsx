@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { SignIn, SignUp, useUser, useClerk } from '@clerk/clerk-react';
+import { AnimatePresence } from 'framer-motion';
 import {
   BookOpen,
   ChevronRight,
@@ -39,7 +40,8 @@ import {
   Filter,
   Volume2,
   VolumeX,
-  Headphones
+  Headphones,
+  Edit2
 } from 'lucide-react';
 import { useSoundContext } from './src/context/SoundContext';
 
@@ -51,12 +53,16 @@ import Profile from './src/components/Profile';
 import Settings from './src/components/Settings';
 import StudyRooms from './src/components/StudyRooms';
 import LiveRoom from './src/components/LiveRoom';
+import TestFirebase from './src/components/TestFirebase';
 import useSound from './src/hooks/useSound';
 import { useIntersectionObserver, useCountUp } from './src/hooks/useLandingAnimations';
 import Loader from './src/components/Loader';
+import DashboardLoader from './src/components/DashboardLoader';
+import { useStudyMaterials } from './src/hooks/useStudyMaterials';
+import { trackDownload, trackView } from './src/lib/firestoreService';
 
 // --- Types ---
-type View = 'landing' | 'auth' | 'onboarding' | 'dashboard' | 'pyqs' | 'materials' | 'tools' | 'about' | 'profile' | 'settings' | 'study-rooms' | 'live-room' | 'admin-dashboard';
+type View = 'landing' | 'auth' | 'onboarding' | 'dashboard' | 'pyqs' | 'materials' | 'tools' | 'about' | 'profile' | 'settings' | 'study-rooms' | 'live-room' | 'admin-dashboard' | 'test-firebase';
 type AuthMode = 'signin' | 'signup' | 'admin-login';
 
 interface UserProfile {
@@ -75,6 +81,7 @@ interface PYQPaper {
   pages: number;
   views: number;
   downloads: number;
+  fileUrl?: string; // Real PDF URL from Firebase
 }
 
 // --- Mock Data ---
@@ -95,6 +102,7 @@ const MOCK_PAPERS: PYQPaper[] = [
 const SUBJECTS = ['ALL', 'DBMS', 'CN', 'OS', 'ML', 'CD', 'TOC'];
 const YEARS = ['ALL', 2024, 2023, 2022, 2021, 2020];
 const TYPES = ['ALL', 'TA1', 'TA2', 'EndSem', 'SummerTerm'];
+const BRANCHES = ['ALL', 'CSE', 'ECE', 'ME', 'CE', 'IT'];
 
 // --- Reusable Components ---
 
@@ -220,19 +228,53 @@ const PYQBrowseView: React.FC<{
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('ALL');
+  const [selectedBranch, setSelectedBranch] = useState(profile.branch || 'CSE');
   const [selectedYear, setSelectedYear] = useState('ALL');
   const [selectedType, setSelectedType] = useState('ALL');
   const [selectedPaper, setSelectedPaper] = useState<PYQPaper | null>(null);
 
+  // --- Firebase Integration ---
+  const { materials } = useStudyMaterials(selectedSubject === 'ALL' ? undefined : selectedSubject, {
+    branch: selectedBranch === 'ALL' ? undefined : selectedBranch
+  });
+
+  const realPapers: PYQPaper[] = useMemo(() => {
+    return materials
+      .filter(m => m.type === 'pyq')
+      .map(m => ({
+        id: m.id,
+        subject: m.subject,
+        type: (m.title.toLowerCase().includes('mid') || m.title.toLowerCase().includes('unit')) ? 'TA1' : 'EndSem',
+        year: m.year ? Number(m.year) : 2025,
+        pages: 12,
+        views: m.views || 0,
+        downloads: 0,
+        fileUrl: m.fileUrl
+      }));
+  }, [materials]);
+
   const filteredPapers = useMemo(() => {
-    return MOCK_PAPERS.filter(p => {
+    const allPapers = [...realPapers, ...MOCK_PAPERS];
+    return allPapers.filter(p => {
       const matchesSearch = searchQuery === '' || p.subject.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesSubject = selectedSubject === 'ALL' || p.subject === selectedSubject;
       const matchesYear = selectedYear === 'ALL' || p.year === Number(selectedYear);
       const matchesType = selectedType === 'ALL' || p.type === selectedType;
+      // We don't filter by branch strictly for mocks as they lack branch data, 
+      // but for real papers the hook handles it.
+      // If we wanted client side filtering:
+      // const matchesBranch = selectedBranch === 'ALL' || p.branch === selectedBranch; 
+
       return matchesSearch && matchesSubject && matchesYear && matchesType;
     });
-  }, [searchQuery, selectedSubject, selectedYear, selectedType]);
+  }, [searchQuery, selectedSubject, selectedYear, selectedType, realPapers, selectedBranch]);
+
+  const handlePaperView = (paper: PYQPaper) => {
+    if (paper.fileUrl) {
+      trackView(paper.id);
+    }
+    setSelectedPaper(paper);
+  };
 
   return (
     <div className="min-h-screen bg-[#F5F5F5] pt-20">
@@ -346,7 +388,7 @@ const PYQBrowseView: React.FC<{
 
                 <div className="space-y-3">
                   <button
-                    onClick={() => setSelectedPaper(paper)}
+                    onClick={() => handlePaperView(paper)}
                     className="w-full bg-black text-white py-4 border-4 border-black font-black uppercase tracking-widest hover:bg-gray-900 transition-colors flex items-center justify-center gap-2"
                   >
                     VIEW PDF <ExternalLink size={16} />
@@ -408,47 +450,94 @@ const PYQBrowseView: React.FC<{
               </div>
             </div>
 
-            {/* Modal Body - Mock PDF Viewer */}
+            {/* Modal Body - PDF Viewer */}
             <div className="flex-1 overflow-hidden flex">
-              <div className="flex-1 bg-gray-200 overflow-y-auto p-12 flex flex-col items-center space-y-8">
-                <div className="w-[600px] h-[800px] bg-white border-4 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] p-12 flex flex-col relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4 border-l-4 border-b-4 border-black font-black text-[10px] uppercase">MIT-ADT</div>
-                  <div className="text-center border-b-4 border-black pb-8 mb-8">
-                    <h2 className="text-4xl font-black uppercase tracking-tighter">{selectedPaper.subject}</h2>
-                    <p className="text-sm font-black uppercase tracking-widest opacity-60">END SEMESTER EXAMINATION 2024</p>
-                  </div>
-                  <div className="space-y-6 flex-1">
-                    <div className="h-4 bg-black w-3/4"></div>
-                    <div className="h-4 bg-black w-full"></div>
-                    <div className="h-4 bg-black w-1/2"></div>
-                    <div className="pt-8 space-y-4">
-                      <div className="h-2 bg-gray-200 w-full"></div>
-                      <div className="h-2 bg-gray-200 w-full"></div>
-                      <div className="h-2 bg-gray-200 w-3/4"></div>
-                    </div>
-                    <div className="pt-8">
-                      <p className="text-xs font-black uppercase border-b-2 border-black inline-block">SECTION A: OBJECTIVE QUESTIONS</p>
-                    </div>
-                    <div className="space-y-2">
-                      {[1, 2, 3, 4, 5].map(i => (
-                        <div key={i} className="flex gap-4 items-center">
-                          <div className="w-4 h-4 border-2 border-black"></div>
-                          <div className="h-2 bg-gray-100 flex-1"></div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+              {selectedPaper.fileUrl ? (
+                <div className="flex-1 bg-gray-200 flex flex-col">
+                  <iframe src={selectedPaper.fileUrl} className="w-full h-full" title="PDF Viewer" />
                 </div>
-                {/* Page 2 indicator */}
-                <div className="text-xs font-black uppercase text-gray-400">↑ END OF PAGE 1 ↑</div>
-              </div>
+              ) : (
+                <div className="flex-1 bg-gray-200 overflow-y-auto p-12 flex flex-col items-center space-y-8">
+                  <div className="w-[600px] h-[800px] bg-white border-4 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] p-12 flex flex-col relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 border-l-4 border-b-4 border-black font-black text-[10px] uppercase">MIT-ADT</div>
+                    <div className="text-center border-b-4 border-black pb-8 mb-8">
+                      <h2 className="text-4xl font-black uppercase tracking-tighter">{selectedPaper.subject}</h2>
+                      <p className="text-sm font-black uppercase tracking-widest opacity-60">END SEMESTER EXAMINATION 2024</p>
+                    </div>
+                    <div className="space-y-6 flex-1">
+                      <div className="h-4 bg-black w-3/4"></div>
+                      <div className="h-4 bg-black w-full"></div>
+                      <div className="h-4 bg-black w-1/2"></div>
+                      <div className="pt-8 space-y-4">
+                        <div className="h-2 bg-gray-200 w-full"></div>
+                        <div className="h-2 bg-gray-200 w-full"></div>
+                        <div className="h-2 bg-gray-200 w-3/4"></div>
+                      </div>
+                      <div className="pt-8">
+                        <p className="text-xs font-black uppercase border-b-2 border-black inline-block">SECTION A: OBJECTIVE QUESTIONS</p>
+                      </div>
+                      <div className="space-y-2">
+                        {[1, 2, 3, 4, 5].map(i => (
+                          <div key={i} className="flex gap-4 items-center">
+                            <div className="w-4 h-4 border-2 border-black"></div>
+                            <div className="h-2 bg-gray-100 flex-1"></div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  {/* Page 2 indicator */}
+                  <div className="text-xs font-black uppercase text-gray-400">↑ END OF PAGE 1 ↑</div>
+                </div>
+              )}
 
               {/* Sidebar controls */}
               <div className="w-64 border-l-4 border-black bg-white p-6 space-y-8 hidden md:block">
                 <div className="space-y-2">
                   <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">TOOLS</p>
-                  <button className="w-full bg-black text-white p-3 text-xs font-black uppercase border-2 border-black flex items-center gap-2 hover:bg-gray-800">
+                  <button
+                    onClick={async () => {
+                      if (selectedPaper?.fileUrl) {
+                        trackDownload(selectedPaper.id);
+                        const filename = `${selectedPaper.subject}_${selectedPaper.type}_${selectedPaper.year}.pdf`;
+                        try {
+                          const response = await fetch(selectedPaper.fileUrl);
+                          if (!response.ok) throw new Error('Network response was not ok');
+                          const blob = await response.blob();
+                          const blobUrl = window.URL.createObjectURL(blob);
+                          const link = document.createElement('a');
+                          link.href = blobUrl;
+                          link.setAttribute('download', filename);
+                          document.body.appendChild(link);
+                          link.click();
+                          link.remove();
+                          window.URL.revokeObjectURL(blobUrl);
+                        } catch (error) {
+                          console.error("Direct download failed, trying fallback:", error);
+                          const link = document.createElement('a');
+                          link.href = selectedPaper.fileUrl;
+                          link.setAttribute('download', filename);
+                          document.body.appendChild(link);
+                          link.click();
+                          link.remove();
+                        }
+                      } else {
+                        alert('Download not available for this paper yet.');
+                      }
+                    }}
+                    className="w-full bg-black text-white p-3 text-xs font-black uppercase border-2 border-black flex items-center gap-2 hover:bg-gray-800"
+                  >
                     <Download size={14} /> DOWNLOAD PDF
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (selectedPaper?.fileUrl) {
+                        window.open(selectedPaper.fileUrl, '_blank');
+                      }
+                    }}
+                    className="w-full bg-blue-500 text-white p-3 text-xs font-black uppercase border-2 border-black flex items-center gap-2 hover:bg-blue-600"
+                  >
+                    <ExternalLink size={14} /> FULLSCREEN
                   </button>
                   <button className="w-full bg-white text-black p-3 text-xs font-black uppercase border-2 border-black flex items-center gap-2 hover:bg-gray-100">
                     <Sparkles size={14} /> AI EXPLAINER
@@ -498,9 +587,52 @@ const DashboardView: React.FC<{
   profile: UserProfile;
   onLogout: () => void;
   setView: (v: View) => void;
-}> = ({ profile, onLogout, setView }) => {
+  onProfileUpdate: (profile: UserProfile) => void;
+}> = ({ profile, onLogout, setView, onProfileUpdate }) => {
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const playClick = useSound();
+
+  // Local state for profile selection
+  const [tempBranch, setTempBranch] = useState(profile.branch);
+  const [tempYear, setTempYear] = useState(profile.year);
+  const [tempSemester, setTempSemester] = useState(profile.semester);
+
+  const handleApplyProfile = () => {
+    playClick();
+    onProfileUpdate({
+      ...profile,
+      branch: tempBranch,
+      year: tempYear,
+      semester: tempSemester
+    });
+    // Navigate to PYQs after updating profile
+    setView('pyqs');
+  };
+
+  const branches = ['CSE', 'ECE', 'ME', 'CE', 'IT'];
+  const years = ['1ST YEAR', '2ND YEAR', '3RD YEAR', '4TH YEAR'];
+
+  // Helper function to get semesters based on year
+  const getSemestersForYear = (year: string) => {
+    switch (year) {
+      case '1ST YEAR': return ['S1', 'S2'];
+      case '2ND YEAR': return ['S3', 'S4'];
+      case '3RD YEAR': return ['S5', 'S6'];
+      case '4TH YEAR': return ['S7', 'S8'];
+      default: return ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8'];
+    }
+  };
+
+  const availableSemesters = getSemestersForYear(tempYear);
+
+  // Auto-adjust semester when year changes
+  useEffect(() => {
+    const validSemesters = getSemestersForYear(tempYear);
+    if (!validSemesters.includes(tempSemester)) {
+      setTempSemester(validSemesters[0]); // Set to first semester of the year
+    }
+  }, [tempYear]);
 
   return (
     <div className="min-h-screen bg-[#F5F5F5] pt-20">
@@ -525,15 +657,66 @@ const DashboardView: React.FC<{
             <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-widest text-gray-500">
               <span className="bg-black text-white px-2 py-1">{profile.branch}</span>
               <span>•</span>
-              <span>{profile.year} Year</span>
+              <span>{profile.year}</span>
               <span>•</span>
-              <span>Sem {profile.semester}</span>
+              <span>{profile.semester}</span>
             </div>
           </div>
           <div className="hidden md:block text-right">
             <p className="text-xs font-black uppercase text-gray-400 tracking-[0.2em] mb-1">CURRENT SESSION</p>
             <p className="text-xl font-black uppercase">2026 ACADEMIC</p>
           </div>
+        </div>
+
+        {/* Profile Selection Widget */}
+        <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <div className="flex items-center gap-2 mb-4">
+            <Edit2 size={20} />
+            <h3 className="text-xl font-black uppercase">Change Your Profile Settings</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="text-[10px] font-black uppercase text-gray-600 block mb-1">Branch</label>
+              <select
+                value={tempBranch}
+                onChange={(e) => setTempBranch(e.target.value)}
+                className="w-full p-2 border-2 border-black font-bold uppercase text-sm focus:outline-none focus:border-purple-600"
+              >
+                {branches.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-gray-600 block mb-1">Year</label>
+              <select
+                value={tempYear}
+                onChange={(e) => setTempYear(e.target.value)}
+                className="w-full p-2 border-2 border-black font-bold uppercase text-sm focus:outline-none focus:border-purple-600"
+              >
+                {years.map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-gray-600 block mb-1">Semester</label>
+              <select
+                value={tempSemester}
+                onChange={(e) => setTempSemester(e.target.value)}
+                className="w-full p-2 border-2 border-black font-bold uppercase text-sm focus:outline-none focus:border-purple-600"
+              >
+                {availableSemesters.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div className="flex items-end">
+              <button
+                onClick={handleApplyProfile}
+                className="w-full bg-black text-white px-6 py-2 font-black uppercase border-4 border-black hover:bg-gray-800 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] active:shadow-none active:translate-x-1 active:translate-y-1 flex items-center justify-center gap-2"
+              >
+                <ArrowRight size={16} /> GO
+              </button>
+            </div>
+          </div>
+          <p className="text-xs font-bold uppercase text-gray-500 mt-3">
+            💡 Update your profile to see materials relevant to your branch and semester
+          </p>
         </div>
 
         {/* 2. The Command Grid */}
@@ -1012,7 +1195,7 @@ const AuthPage: React.FC<{ mode: AuthMode; setMode: (mode: AuthMode) => void; on
                     }
                   }}
                   signUpUrl="#"
-                  fallbackRedirectUrl="/dashboard"
+                  forceRedirectUrl="/"
                 />
                 <div className="w-full mt-4 flex justify-between items-center text-[10px] font-bold uppercase tracking-widest px-1">
                   <div className="flex gap-2">
@@ -1056,7 +1239,7 @@ const AuthPage: React.FC<{ mode: AuthMode; setMode: (mode: AuthMode) => void; on
                     }
                   }}
                   signInUrl="#"
-                  fallbackRedirectUrl="/dashboard"
+                  forceRedirectUrl="/"
                 />
                 <div className="w-full mt-4 flex justify-between items-center text-[10px] font-bold uppercase tracking-widest px-1">
                   <div className="flex gap-2">
@@ -1597,7 +1780,8 @@ const Footer: React.FC = () => (
 );
 
 export default function App() {
-  const [isLoading, setIsLoading] = useState(true); // Custom loader active
+  const [isLoading, setIsLoading] = useState(true); // Custom loader active for initial load
+  const [isNavigating, setIsNavigating] = useState(false); // Quick loader for dashboard navigation
   const { isLoaded, isSignedIn, user } = useUser();
   const { signOut } = useClerk();
   const [view, setView] = useState<View>('landing');
@@ -1689,6 +1873,9 @@ export default function App() {
           setView('onboarding');
         }
 
+        // Bypass the cinematic loader for logged-in users (show only for guests on landing)
+        setIsLoading(false);
+
         setProfile(prev => ({
           ...prev,
           name: user.fullName || prev.name,
@@ -1767,9 +1954,31 @@ export default function App() {
   };
 
   const handleSetView = (v: View) => {
-    setView(v);
-    window.scrollTo(0, 0);
+    // Only trigger loader for major view changes (e.g. going to dashboard, pyqs, materials)
+    // and only if we are already in a "logged in" context (dashboard-like views)
+    const dashboardViews = ['dashboard', 'pyqs', 'materials', 'tools', 'about', 'profile', 'settings', 'study-rooms'];
+    const isInternalNav = dashboardViews.includes(view) && dashboardViews.includes(v);
+
+    if (isInternalNav && v !== view) {
+      setIsNavigating(true);
+      // Short delay to show loader
+      setTimeout(() => {
+        setView(v);
+        window.scrollTo(0, 0);
+        // Small buffer to let the new view render before removing loader
+        setTimeout(() => setIsNavigating(false), 500);
+      }, 400);
+    } else {
+      setView(v);
+      window.scrollTo(0, 0);
+    }
   };
+
+  const handleProfileUpdate = (updatedProfile: UserProfile) => {
+    setProfile(updatedProfile);
+    localStorage.setItem('user_profile', JSON.stringify(updatedProfile));
+  };
+
 
 
 
@@ -1785,6 +1994,10 @@ export default function App() {
 
   return (
     <div className="min-h-screen font-mono">
+      <AnimatePresence>
+        {isNavigating && <DashboardLoader />}
+      </AnimatePresence>
+
       {(view === 'landing' || view === 'auth' || view === 'onboarding') && (
         <Navbar
           onAuth={navigateToAuth}
@@ -1849,7 +2062,7 @@ export default function App() {
       )}
 
       {view === 'dashboard' && (
-        <DashboardView profile={profile} onLogout={handleLogout} setView={handleSetView} />
+        <DashboardView profile={profile} onLogout={handleLogout} setView={handleSetView} onProfileUpdate={handleProfileUpdate} />
       )}
 
       {view === 'pyqs' && (
@@ -1871,7 +2084,7 @@ export default function App() {
           />
           {/* Main content wrapper */}
           <div className="p-4">
-            <StudyMaterials profile={profile} />
+            <StudyMaterials profile={profile} onProfileUpdate={handleProfileUpdate} />
           </div>
         </div>
       )}
@@ -1925,7 +2138,7 @@ export default function App() {
             setProfileOpen={setGlobalProfileOpen}
           />
           <div className="py-12 px-4">
-            <Profile profile={profile} onBack={() => handleSetView('dashboard')} />
+            <Profile profile={profile} onBack={() => handleSetView('dashboard')} onUpdate={handleProfileUpdate} />
           </div>
         </div>
       )}
@@ -1970,6 +2183,10 @@ export default function App() {
 
       {view === 'admin-dashboard' && (
         <AdminDashboard onLogout={handleLogout} />
+      )}
+
+      {view === 'test-firebase' && (
+        <TestFirebase />
       )}
     </div>
   );
