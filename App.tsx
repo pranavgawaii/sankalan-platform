@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { SignIn, SignUp, useUser, useClerk } from '@clerk/clerk-react';
 import { AnimatePresence } from 'framer-motion';
+import { Analytics } from '@vercel/analytics/react';
 import {
   BookOpen,
   ChevronRight,
@@ -596,6 +597,7 @@ const DashboardView: React.FC<{
   const [tempBranch, setTempBranch] = useState(profile.branch);
   const [tempYear, setTempYear] = useState(profile.year);
   const [tempSemester, setTempSemester] = useState(profile.semester);
+  const [configOpen, setConfigOpen] = useState(false);
 
   const handleApplyProfile = () => {
     playClick();
@@ -605,14 +607,12 @@ const DashboardView: React.FC<{
       year: tempYear,
       semester: tempSemester
     });
-    // Navigate to PYQs after updating profile
-    setView('pyqs');
+    setConfigOpen(false);
   };
 
   const branches = ['CSE', 'ECE', 'ME', 'CE', 'IT'];
   const years = ['1ST YEAR', '2ND YEAR', '3RD YEAR', '4TH YEAR'];
 
-  // Helper function to get semesters based on year
   const getSemestersForYear = (year: string) => {
     switch (year) {
       case '1ST YEAR': return ['S1', 'S2'];
@@ -625,16 +625,15 @@ const DashboardView: React.FC<{
 
   const availableSemesters = getSemestersForYear(tempYear);
 
-  // Auto-adjust semester when year changes
   useEffect(() => {
     const validSemesters = getSemestersForYear(tempYear);
     if (!validSemesters.includes(tempSemester)) {
-      setTempSemester(validSemesters[0]); // Set to first semester of the year
+      setTempSemester(validSemesters[0]);
     }
   }, [tempYear]);
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] pt-20">
+    <div className="min-h-screen bg-gray-50/50 pt-20">
       <AppNav
         profile={profile}
         onLogout={onLogout}
@@ -647,266 +646,197 @@ const DashboardView: React.FC<{
       />
 
       <main className="container mx-auto px-4 py-8 max-w-6xl space-y-8">
-        {/* 1. Identity Header */}
-        <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter mb-2">
-              HELLO, {profile.name.split(' ')[0]}
-            </h2>
-            <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-widest text-gray-500">
-              <span className="bg-black text-white px-2 py-1">{profile.branch}</span>
-              <span>•</span>
-              <span>{profile.year}</span>
-              <span>•</span>
-              <span>{profile.semester}</span>
+        {/* 1. Neo-Brutalist Command Bar */}
+        <div className="bg-white border-4 border-black p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] sticky top-24 z-30 flex flex-col md:flex-row items-center justify-between gap-4 transition-all hover:-translate-y-1 hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] duration-200">
+          <div className="flex items-center gap-4 w-full md:w-auto">
+            <div className="w-14 h-14 bg-black text-white flex items-center justify-center font-black text-2xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]">
+              {profile.name.charAt(0)}
+            </div>
+            <div>
+              <h2 className="text-2xl font-black uppercase tracking-tighter text-black leading-none flex items-center gap-2">
+                {profile.name} <span className="text-[10px] bg-yellow-400 text-black px-1 border border-black transform -rotate-6">PRO</span>
+              </h2>
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-500 mt-2">
+                <div className="flex items-center gap-1 bg-green-100 px-2 py-0.5 border border-black text-green-800">
+                  <div className="w-2 h-2 bg-green-600 animate-pulse"></div>
+                  ONLINE
+                </div>
+                <span>ID: {Math.floor(Math.random() * 10000)}</span>
+              </div>
             </div>
           </div>
-          <div className="hidden md:block text-right">
-            <p className="text-xs font-black uppercase text-gray-400 tracking-[0.2em] mb-1">CURRENT SESSION</p>
-            <p className="text-xl font-black uppercase">2026 ACADEMIC</p>
+
+          <div className="flex items-center gap-2 w-full md:w-auto bg-gray-50 p-2 border-2 border-dashed border-gray-300 hover:border-black hover:border-solid transition-all duration-300">
+            <div className="flex items-center gap-2 px-2 text-[10px] font-black uppercase tracking-widest text-gray-400">
+              <span className="hidden md:inline">SYSTEM CONFIG</span>
+              <div className="h-4 w-px bg-gray-300"></div>
+            </div>
+
+            {configOpen ? (
+              <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right duration-200 px-2">
+                <select value={tempBranch} onChange={e => setTempBranch(e.target.value)} className="bg-white border-2 border-black text-xs font-bold uppercase p-1 outline-none cursor-pointer hover:bg-yellow-100">
+                  {branches.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+                <select value={tempYear} onChange={e => setTempYear(e.target.value)} className="bg-white border-2 border-black text-xs font-bold uppercase p-1 outline-none cursor-pointer hover:bg-yellow-100">
+                  {years.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+                <select value={tempSemester} onChange={e => setTempSemester(e.target.value)} className="bg-white border-2 border-black text-xs font-bold uppercase p-1 outline-none cursor-pointer hover:bg-yellow-100">
+                  {availableSemesters.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+                <button onClick={handleApplyProfile} className="bg-black text-white p-1.5 border-2 border-black hover:bg-white hover:text-black transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none"><CheckCircle2 size={14} /></button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-4 cursor-pointer px-4 py-1.5 hover:bg-white transition-all group" onClick={() => setConfigOpen(true)}>
+                <span className="font-black text-sm uppercase underline decoration-2 underline-offset-4 decoration-gray-300 group-hover:decoration-black">{profile.branch}</span>
+                <span className="text-gray-300">/</span>
+                <span className="font-black text-sm uppercase underline decoration-2 underline-offset-4 decoration-gray-300 group-hover:decoration-black">{profile.year}</span>
+                <span className="text-gray-300">/</span>
+                <span className="font-black text-sm uppercase underline decoration-2 underline-offset-4 decoration-gray-300 group-hover:decoration-black">{profile.semester}</span>
+                <Edit2 size={12} className="opacity-40 group-hover:opacity-100 ml-2 transition-opacity" />
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Profile Selection Widget */}
-        <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-          <div className="flex items-center gap-2 mb-4">
-            <Edit2 size={20} />
-            <h3 className="text-xl font-black uppercase">Change Your Profile Settings</h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="text-[10px] font-black uppercase text-gray-600 block mb-1">Branch</label>
-              <select
-                value={tempBranch}
-                onChange={(e) => setTempBranch(e.target.value)}
-                className="w-full p-2 border-2 border-black font-bold uppercase text-sm focus:outline-none focus:border-purple-600"
-              >
-                {branches.map(b => <option key={b} value={b}>{b}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-[10px] font-black uppercase text-gray-600 block mb-1">Year</label>
-              <select
-                value={tempYear}
-                onChange={(e) => setTempYear(e.target.value)}
-                className="w-full p-2 border-2 border-black font-bold uppercase text-sm focus:outline-none focus:border-purple-600"
-              >
-                {years.map(y => <option key={y} value={y}>{y}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-[10px] font-black uppercase text-gray-600 block mb-1">Semester</label>
-              <select
-                value={tempSemester}
-                onChange={(e) => setTempSemester(e.target.value)}
-                className="w-full p-2 border-2 border-black font-bold uppercase text-sm focus:outline-none focus:border-purple-600"
-              >
-                {availableSemesters.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-            <div className="flex items-end">
-              <button
-                onClick={handleApplyProfile}
-                className="w-full bg-black text-white px-6 py-2 font-black uppercase border-4 border-black hover:bg-gray-800 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] active:shadow-none active:translate-x-1 active:translate-y-1 flex items-center justify-center gap-2"
-              >
-                <ArrowRight size={16} /> GO
-              </button>
-            </div>
-          </div>
-          <p className="text-xs font-bold uppercase text-gray-500 mt-3">
-            💡 Update your profile to see materials relevant to your branch and semester
-          </p>
-        </div>
+        {/* 2. Tactile Neo-Brutalist Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 auto-rows-[260px]">
 
-        {/* 2. The Command Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-          {/* PYQs - Large Card */}
+          {/* Card 1: PYQ Archive */}
           <div
             onClick={() => setView('pyqs')}
-            className="group bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all cursor-pointer relative overflow-hidden h-64 flex flex-col justify-between"
+            className="group bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-2 hover:translate-y-2 transition-all duration-200 cursor-pointer overflow-hidden flex flex-col justify-between p-8"
           >
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-              <BookOpen size={120} />
+            {/* Badge */}
+            <div className="w-fit">
+              <div className="bg-[#FFC900] text-black border-2 border-black px-3 py-1 text-xs font-black uppercase tracking-widest">
+                CORE ARCHIVE
+              </div>
             </div>
-            <div className="relative z-10">
-              <span className="bg-yellow-400 text-black border-2 border-black px-2 py-1 text-xs font-black uppercase">Core</span>
-              <h3 className="text-4xl font-black uppercase tracking-tighter mt-4">Browse PYQs</h3>
-              <p className="font-bold text-gray-500 uppercase mt-2 max-w-sm">Access the complete archive of previous year question papers.</p>
+
+            {/* Content */}
+            <div className="mt-4">
+              <h3 className="text-4xl font-black uppercase tracking-tighter mb-2 group-hover:underline decoration-4 underline-offset-4">
+                BROWSE PYQS
+              </h3>
+              <p className="text-sm font-bold text-gray-500 uppercase tracking-wide leading-relaxed">
+                Access the complete archive of previous year question papers.
+              </p>
             </div>
-            <div className="relative z-10 flex items-center gap-2 font-black uppercase text-sm group-hover:gap-4 transition-all">
-              Access Library <ArrowRight size={16} />
+
+            {/* Action */}
+            <div className="flex items-center gap-2 text-sm font-black uppercase tracking-widest mt-4">
+              ACCESS LIBRARY <ArrowRight size={16} strokeWidth={3} />
+            </div>
+
+            {/* Icon Decoration */}
+            <div className="absolute top-8 right-8 text-gray-100 -z-10">
+              <BookOpen size={120} strokeWidth={1} />
             </div>
           </div>
 
-          {/* AI Tools - Large Card */}
-          <div
-            onClick={() => setView('tools')}
-            className="group bg-black text-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(100,100,100,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all cursor-pointer relative overflow-hidden h-64 flex flex-col justify-between"
-          >
-            <div className="absolute top-0 right-0 p-4 opacity-20 text-gray-500">
-              <Cpu size={120} />
-            </div>
-            <div className="relative z-10">
-              <span className="bg-white text-black px-2 py-1 text-xs font-black uppercase border-2 border-white">New</span>
-              <h3 className="text-4xl font-black uppercase tracking-tighter mt-4">AI Power Tools</h3>
-              <p className="font-bold text-gray-400 uppercase mt-2">Mock Tester • Resume Builder • Summarizer</p>
-            </div>
-            <div className="relative z-10 flex items-center gap-2 font-black uppercase text-sm group-hover:gap-4 transition-all">
-              Launch Tools <ArrowRight size={16} />
-            </div>
-          </div>
-
-          {/* Study Materials */}
+          {/* Card 2: Study Materials */}
           <div
             onClick={() => setView('materials')}
-            className="group bg-white border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all cursor-pointer flex flex-col justify-between h-48"
+            className="group bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-2 hover:translate-y-2 transition-all duration-200 cursor-pointer overflow-hidden flex flex-col justify-between p-8"
           >
-            <FileText size={48} className="mb-4 group-hover:scale-110 transition-transform" />
-            <div>
-              <h3 className="text-2xl font-black uppercase tracking-tighter">Study Materials</h3>
-              <p className="text-xs font-bold uppercase text-gray-500 mt-1">Lecture notes & slides</p>
+            <div className="w-fit">
+              <div className="bg-[#4D96FF] text-white border-2 border-black px-3 py-1 text-xs font-black uppercase tracking-widest">
+                RESOURCES
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <h3 className="text-4xl font-black uppercase tracking-tighter mb-2 group-hover:underline decoration-4 underline-offset-4">
+                LECTURE NOTES
+              </h3>
+              <p className="text-sm font-bold text-gray-500 uppercase tracking-wide leading-relaxed">
+                Official slides, handouts, and class summaries.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 text-sm font-black uppercase tracking-widest mt-4">
+              OPEN FOLDER <ArrowRight size={16} strokeWidth={3} />
+            </div>
+
+            <div className="absolute top-8 right-8 text-gray-100 -z-10">
+              <FileText size={120} strokeWidth={1} />
             </div>
           </div>
 
-          {/* Study Rooms */}
+          {/* Card 3: AI Tools */}
+          <div
+            onClick={() => setView('tools')}
+            className="group bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-2 hover:translate-y-2 transition-all duration-200 cursor-pointer overflow-hidden flex flex-col justify-between p-8"
+          >
+            <div className="w-fit">
+              <div className="bg-[#A06CD5] text-white border-2 border-black px-3 py-1 text-xs font-black uppercase tracking-widest">
+                BETA TOOLS
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <h3 className="text-4xl font-black uppercase tracking-tighter mb-2 group-hover:underline decoration-4 underline-offset-4">
+                AI LAB
+              </h3>
+              <p className="text-sm font-bold text-gray-500 uppercase tracking-wide leading-relaxed">
+                Mock tests generator and resume builder tools.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 text-sm font-black uppercase tracking-widest mt-4">
+              LAUNCH TOOLS <ArrowRight size={16} strokeWidth={3} />
+            </div>
+
+            <div className="absolute top-8 right-8 text-gray-100 -z-10">
+              <Cpu size={120} strokeWidth={1} />
+            </div>
+          </div>
+
+          {/* Card 4: Study Rooms */}
           <div
             onClick={() => setView('study-rooms')}
-            className="group bg-white border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all cursor-pointer flex flex-col justify-between h-48"
+            className="group bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-2 hover:translate-y-2 transition-all duration-200 cursor-pointer overflow-hidden flex flex-col justify-between p-8"
           >
-            <div className="flex justify-between items-start">
-              <Headphones size={48} className="mb-4 group-hover:scale-110 transition-transform" />
-              <span className="flex h-3 w-3 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-              </span>
+            <div className="w-fit">
+              <div className="bg-[#6BCB77] text-black border-2 border-black px-3 py-1 text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                <div className="w-2 h-2 bg-black rounded-full animate-pulse"></div> LIVE
+              </div>
             </div>
-            <div>
-              <h3 className="text-2xl font-black uppercase tracking-tighter">Live Study Rooms</h3>
-              <p className="text-xs font-bold uppercase text-gray-500 mt-1">Listen & Focus with others</p>
+
+            <div className="mt-4">
+              <h3 className="text-4xl font-black uppercase tracking-tighter mb-2 group-hover:underline decoration-4 underline-offset-4">
+                STUDY ROOMS
+              </h3>
+              <p className="text-sm font-bold text-gray-500 uppercase tracking-wide leading-relaxed">
+                Join 12+ students focusing right now.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 text-sm font-black uppercase tracking-widest mt-4">
+              JOIN SESSION <ArrowRight size={16} strokeWidth={3} />
+            </div>
+
+            <div className="absolute top-8 right-8 text-gray-100 -z-10">
+              <Headphones size={120} strokeWidth={1} />
             </div>
           </div>
 
         </div>
 
-        {/* 3. Footer / Status */}
-        <div className="border-t-4 border-black pt-6 flex flex-col md:flex-row justify-between items-center text-xs font-bold uppercase text-gray-400 tracking-widest">
-          <span>System Status: Online</span>
-          <span>v2.4.0 (Stable)</span>
+        {/* 3. Minimal Footer */}
+        <div className="border-t border-gray-100 pt-8 flex flex-col md:flex-row justify-between items-center text-xs font-medium text-gray-400">
+          <p>© 2026 Sankalan Platform. All rights reserved.</p>
+          <div className="flex gap-6 mt-4 md:mt-0">
+            <span className="hover:text-gray-900 cursor-pointer transition-colors">Status: Operational</span>
+            <span className="hover:text-gray-900 cursor-pointer transition-colors">Privacy</span>
+            <span className="hover:text-gray-900 cursor-pointer transition-colors">Terms</span>
+          </div>
         </div>
 
       </main>
     </div>
   );
 };
-/*
-            <div className="flex justify-between items-start mb-8">
-              <div>
-                <h4 className="text-4xl font-black uppercase tracking-tight mb-2">📅 DBMS ENDSEM</h4>
-                <div className="h-2 bg-black w-24 mb-4"></div>
-                <p className="text-sm font-bold uppercase tracking-wide">Date: 25 Jan 2026 • <span className="text-red-600">15 days left</span></p>
-              </div>
-              <div className="bg-stripes border-2 border-black w-24 h-24 hidden md:block"></div>
-            </div>
-
-            <div className="space-y-3 mb-10">
-              <div className="flex justify-between text-xs font-black uppercase tracking-widest">
-                <span>Progress</span>
-                <span>80%</span>
-              </div>
-              <div className="flex gap-2">
-                {[...Array(10)].map((_, i) => (
-                  <div key={i} className={`h-10 flex-1 border-4 border-black ${i < 8 ? 'bg-black' : 'bg-white'}`}></div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-6">
-              <button className="flex-1 bg-black text-white py-5 border-4 border-black font-black uppercase tracking-widest hover:bg-gray-900 transition-colors text-xl shadow-[8px_8px_0px_0px_rgba(0,0,0,0.2)]">
-                START STUDYING →
-              </button>
-              <button className="flex-1 bg-white text-black py-5 border-4 border-black font-black uppercase tracking-widest hover:bg-gray-50 transition-colors text-xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-                AI MOCK TEST →
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <h3 className="text-2xl font-black uppercase tracking-widest flex items-center gap-3">
-            <Zap size={28} /> Quick Actions
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
-            {actions.map((action, i) => (
-              <button
-                key={i}
-                onClick={() => (action.id === 'pyqs' || action.id === 'materials') && setView(action.id as View)}
-                className="bg-white border-4 border-black p-10 flex items-center gap-8 hover:bg-gray-50 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transition-all active:translate-y-2 active:translate-x-2 active:shadow-none text-left"
-              >
-                <span className="text-7xl">{action.icon}</span>
-                <div>
-                  <span className="block text-2xl font-black uppercase tracking-tighter mb-1">{action.title}</span>
-                  <span className="text-xs font-bold uppercase opacity-60 tracking-wider">{action.desc}</span>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-6 pb-20">
-          <h3 className="text-2xl font-black uppercase tracking-widest flex items-center gap-3">
-            <Clock size={28} /> Recent Activity
-          </h3>
-          <div className="bg-white border-4 border-black p-2 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            {activity.map((item, i) => (
-              <div key={i} className="flex items-center justify-between p-6 hover:bg-gray-50 border-b-4 border-black last:border-b-0 border-dotted group">
-                <div className="flex items-center gap-6">
-                  <div className="w-4 h-4 bg-black group-hover:rotate-45 transition-transform"></div>
-                  <span className="text-lg font-bold uppercase tracking-tight">{item.text}</span>
-                </div>
-                <span className="text-xs font-black uppercase text-gray-400 tracking-widest">{item.time}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </main >
-
-
-{
-  notifOpen && (
-    <div className="fixed inset-y-0 right-0 w-96 bg-white border-l-8 border-black z-[100] shadow-2xl p-10 overflow-y-auto animate-in slide-in-from-right duration-300">
-      <div className="flex items-center justify-between mb-12">
-        <h3 className="text-3xl font-black uppercase tracking-tighter">ALERTS [🔔]</h3>
-        <button onClick={() => setNotifOpen(false)} className="p-2 border-4 border-black hover:bg-black hover:text-white transition-colors">
-          <X size={24} />
-        </button>
-      </div>
-      <div className="space-y-8">
-        <div className="p-6 border-4 border-black bg-gray-50 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-1 bg-red-600 text-white text-[8px] font-black uppercase">NEW</div>
-          <p className="text-xs font-black uppercase text-red-600 mb-2 tracking-widest">PYQ ARCHIVE UPDATE</p>
-          <p className="text-lg font-bold uppercase leading-none mb-4">Advanced Algorithms 2025 paper now available.</p>
-          <p className="text-[10px] font-black uppercase text-gray-400">2 hours ago</p>
-        </div>
-        <div className="p-6 border-4 border-black bg-gray-50 group">
-          <p className="text-xs font-black uppercase text-gray-600 mb-2 tracking-widest">DEADLINE REMINDER</p>
-          <p className="text-lg font-bold uppercase leading-none mb-4">Your DBMS Endsem is in 15 days. Start preparing!</p>
-          <p className="text-[10px] font-black uppercase text-gray-400">Yesterday</p>
-        </div>
-      </div>
-      <button className="w-full mt-16 py-4 border-4 border-black bg-black text-white font-black uppercase text-sm hover:bg-gray-800 transition-colors tracking-[0.2em]">
-        MARK ALL AS READ
-      </button>
-    </div>
-  )
-}
-    </div >
-  );
-};
-*/
-
-
-
 // --- Onboarding Component ---
 
 const OnboardingPage: React.FC<{ onComplete: (profile: Partial<UserProfile>) => void }> = ({ onComplete }) => {
@@ -1853,6 +1783,10 @@ export default function App() {
     }
   };
 
+  const handleDeleteRoom = (roomId: string) => {
+    setRooms(rooms.filter((r: any) => r.id !== roomId));
+  };
+
   const handleLeaveRoom = () => {
     setActiveRoom(null);
     setView('study-rooms');
@@ -1993,6 +1927,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen font-mono">
+      <Analytics />
       <AnimatePresence>
         {isNavigating && <DashboardLoader />}
       </AnimatePresence>
@@ -2172,7 +2107,7 @@ export default function App() {
             profileOpen={globalProfileOpen}
             setProfileOpen={setGlobalProfileOpen}
           />
-          <StudyRooms rooms={rooms} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} />
+          <StudyRooms rooms={rooms} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} onDeleteRoom={handleDeleteRoom} />
         </div>
       )}
 
@@ -2183,6 +2118,7 @@ export default function App() {
       {view === 'admin-dashboard' && (
         <AdminDashboard onLogout={handleLogout} />
       )}
+      <Analytics />
     </div>
   );
 }

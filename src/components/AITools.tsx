@@ -9,7 +9,8 @@ import {
     BrainCircuit,
     Search,
     ArrowRight,
-    Zap
+    Zap,
+    X
 } from 'lucide-react';
 import useSound from '../hooks/useSound';
 import MockTesterView from './tool-views/MockTesterView';
@@ -70,9 +71,78 @@ const TOOLS: Tool[] = [
     }
 ];
 
+const FeatureRequestModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+    const playClick = useSound();
+    const [idea, setIdea] = React.useState({ title: '', description: '', priority: 'Medium' });
+
+    if (!isOpen) return null;
+
+    const handleSubmit = () => {
+        playClick();
+        const subject = encodeURIComponent(`Feature Request: ${idea.title} [${idea.priority}]`);
+        const body = encodeURIComponent(`Priority: ${idea.priority}\n\nDescription:\n${idea.description}\n\n---\nSent from Sankalan AI Tools`);
+        window.open(`mailto:features@sankalan.app?subject=${subject}&body=${body}`, "_blank");
+        onClose();
+        alert("Redirecting to your email client to finalize the request! 🚀");
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-white border-4 border-black w-full max-w-lg shadow-[16px_16px_0px_0px_rgba(255,255,255,0.2)]">
+                <div className="bg-black text-white p-4 flex justify-between items-center border-b-4 border-black">
+                    <h3 className="text-xl font-black uppercase flex items-center gap-2"><Sparkles size={24} /> New Feature Protocol</h3>
+                    <button onClick={() => { playClick(); onClose(); }}><X size={24} /></button>
+                </div>
+                <div className="p-6 space-y-6">
+                    <div>
+                        <label className="text-[10px] font-black uppercase mb-1 block">Feature Title</label>
+                        <input
+                            type="text"
+                            placeholder="e.g. AI Syllabus Tracker"
+                            className="w-full border-2 border-black p-3 font-bold uppercase focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+                            value={idea.title}
+                            onChange={(e) => setIdea({ ...idea, title: e.target.value })}
+                        />
+                    </div>
+                    <div>
+                        <label className="text-[10px] font-black uppercase mb-1 block">Priority Level</label>
+                        <div className="flex gap-2">
+                            {['Low', 'Medium', 'High'].map(p => (
+                                <button
+                                    key={p}
+                                    onClick={() => { playClick(); setIdea({ ...idea, priority: p }); }}
+                                    className={`flex-1 py-2 border-2 border-black font-bold uppercase text-xs transition-all ${idea.priority === p ? 'bg-black text-white' : 'hover:bg-gray-100'}`}
+                                >
+                                    {p}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <div>
+                        <label className="text-[10px] font-black uppercase mb-1 block">Description / Use Case</label>
+                        <textarea
+                            placeholder="Describe what you want to build..."
+                            className="w-full border-2 border-black p-3 font-bold uppercase h-32 resize-none focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+                            value={idea.description}
+                            onChange={(e) => setIdea({ ...idea, description: e.target.value })}
+                        />
+                    </div>
+                    <button
+                        onClick={handleSubmit}
+                        className="w-full py-4 bg-black text-white border-4 border-black font-black uppercase text-xl hover:bg-white hover:text-black hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all active:translate-y-1 active:shadow-none flex items-center justify-center gap-2"
+                    >
+                        Initialize Request <ArrowRight size={24} />
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const AITools: React.FC = () => {
     const playClick = useSound();
     const [showKeyModal, setShowKeyModal] = React.useState(false);
+    const [showFeatureModal, setShowFeatureModal] = React.useState(false);
     const [activeTool, setActiveTool] = React.useState<string | null>(null);
     const [pendingToolId, setPendingToolId] = React.useState<string | null>(null);
     const [apiKey, setApiKey] = React.useState(localStorage.getItem('GEMINI_API_KEY') || '');
@@ -188,7 +258,10 @@ const AITools: React.FC = () => {
                     <h4 className="text-2xl font-black uppercase mb-2">Have a crazy idea?</h4>
                     <p className="font-bold uppercase opacity-60">We build what you need. Submit a feature request.</p>
                 </div>
-                <button onClick={playClick} className="retro-btn bg-white text-black px-8 py-4 text-lg font-black uppercase border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:scale-105 flex items-center gap-2">
+                <button
+                    onClick={() => { playClick(); setShowFeatureModal(true); }}
+                    className="retro-btn bg-white text-black px-8 py-4 text-lg font-black uppercase border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:scale-105 hover:shadow-[12px_12px_0px_0px_rgba(255,230,0,1)] active:scale-95 transition-all flex items-center gap-2"
+                >
                     <Sparkles size={20} /> Request Feature
                 </button>
             </div>
@@ -197,6 +270,11 @@ const AITools: React.FC = () => {
                 isOpen={showKeyModal}
                 onClose={() => setShowKeyModal(false)}
                 onSave={handleKeySave}
+            />
+
+            <FeatureRequestModal
+                isOpen={showFeatureModal}
+                onClose={() => setShowFeatureModal(false)}
             />
         </div>
     );

@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Clock,
     MessageSquare,
@@ -19,7 +18,12 @@ import {
     LogOut,
     Play,
     Pause,
-    SkipForward
+    SkipForward,
+    Upload,
+    CheckSquare,
+    Square,
+    MessageCircle,
+    Music
 } from 'lucide-react';
 import useSound from '../hooks/useSound';
 
@@ -29,9 +33,9 @@ const LiveRoom: React.FC<{ roomData: any; onLeave: () => void }> = ({ roomData, 
     // Settings State
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [settings, setSettings] = useState({
-        workTime: 25,
-        breakTime: 5,
-        waterReminder: 30, // minutes (0 to disable)
+        workTime: roomData.settings?.workTime || 25, // Initialize with room setting
+        breakTime: roomData.settings?.breakTime || 5, // Initialize with room setting
+        waterReminder: 30,
         soundEnabled: true,
         autoStartBreak: false
     });
@@ -39,6 +43,15 @@ const LiveRoom: React.FC<{ roomData: any; onLeave: () => void }> = ({ roomData, 
     // Room State
     const [micOn, setMicOn] = useState(false);
     const [videoOn, setVideoOn] = useState(false);
+
+    // Document State
+    const [currentDoc, setCurrentDoc] = useState<string | null>(null);
+    const [docName, setDocName] = useState<string>("No Document Loaded");
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Task State
+    const [tasks, setTasks] = useState<{ id: number, text: string, done: boolean }[]>([]);
+    const [newTask, setNewTask] = useState('');
 
     // Timer State
     const [timerActive, setTimerActive] = useState(true);
@@ -53,6 +66,17 @@ const LiveRoom: React.FC<{ roomData: any; onLeave: () => void }> = ({ roomData, 
 
     // --- Effects ---
 
+    // 0. Initial Room Announcement
+    useEffect(() => {
+        if (roomData.settings?.announcement) {
+            setMessages(prev => [{
+                user: 'SYSTEM',
+                text: `📢 ANNOUNCEMENT: ${roomData.settings.announcement}`,
+                time: 'Just Now'
+            }, ...prev]);
+        }
+    }, []);
+
     // 1. Timer Logic
     useEffect(() => {
         let interval: NodeJS.Timeout;
@@ -61,7 +85,6 @@ const LiveRoom: React.FC<{ roomData: any; onLeave: () => void }> = ({ roomData, 
         } else if (timeLeft === 0) {
             // Timer finished
             if (settings.soundEnabled) {
-                // Play alarm sound (using click for now as placeholder, ideally a different sound)
                 playClick();
             }
 
@@ -84,9 +107,6 @@ const LiveRoom: React.FC<{ roomData: any; onLeave: () => void }> = ({ roomData, 
         if (settings.waterReminder > 0) {
             const hydrationInterval = setInterval(() => {
                 if (settings.soundEnabled) playClick();
-                // We could use a toast here, but for now a simple alert or just a console log/visual cue?
-                // Using a browser notification if allowed, or just a temporary UI element.
-                // For simplicity, let's append a system message to chat.
                 setMessages(prev => [...prev, {
                     user: 'SYSTEM',
                     text: '💧 Time to drink water! Stay hydrated.',
@@ -96,13 +116,6 @@ const LiveRoom: React.FC<{ roomData: any; onLeave: () => void }> = ({ roomData, 
             return () => clearInterval(hydrationInterval);
         }
     }, [settings.waterReminder, settings.soundEnabled, playClick]);
-
-    // Apply settings to timer when they change (if timer is reset or unused)? 
-    // Or just let the current session finish. 
-    // Let's reset timer if settings change ONLY if it wasn't running? No, complicate.
-    // Simple approach: settings apply on NEXT cycle or manual reset.
-    // Actually, if user changes workTime, we should probably update timeLeft if it was at the start?
-    // Let's keep it simple: Settings take effect on next phase switch or reset.
 
     const formatTime = (seconds: number) => {
         const m = Math.floor(seconds / 60);
@@ -117,6 +130,29 @@ const LiveRoom: React.FC<{ roomData: any; onLeave: () => void }> = ({ roomData, 
         setNewMessage('');
         playClick();
     };
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            const url = URL.createObjectURL(file);
+            setCurrentDoc(url);
+            setDocName(file.name);
+            playClick();
+        }
+    };
+
+    const handleAddTask = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newTask.trim()) return;
+        setTasks([...tasks, { id: Date.now(), text: newTask, done: false }]);
+        setNewTask('');
+        playClick();
+    }
+
+    const toggleTask = (id: number) => {
+        setTasks(tasks.map(t => t.id === id ? { ...t, done: !t.done } : t));
+        playClick();
+    }
 
     return (
         <div className="fixed inset-0 bg-gray-100 z-[100] flex flex-col h-screen overflow-hidden">
@@ -197,8 +233,6 @@ const LiveRoom: React.FC<{ roomData: any; onLeave: () => void }> = ({ roomData, 
                                 onClick={() => {
                                     playClick();
                                     setSettingsOpen(false);
-                                    // Reset timer on save to apply new settings immediately? 
-                                    // Optional: setTimeLeft(settings.workTime * 60); setMode('WORK'); setTimerActive(false);
                                 }}
                                 className="w-full bg-black text-white py-3 font-black uppercase border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all"
                             >
@@ -226,6 +260,14 @@ const LiveRoom: React.FC<{ roomData: any; onLeave: () => void }> = ({ roomData, 
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <a
+                        href="https://chat.whatsapp.com/sample-group-link"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hidden md:flex bg-[#25D366] text-white px-4 py-2 text-xs font-black uppercase border-2 border-transparent hover:border-white transition-all items-center gap-2"
+                    >
+                        <MessageCircle size={16} /> Join WhatsApp
+                    </a>
                     <button
                         onClick={() => { playClick(); onLeave(); }}
                         className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 text-xs font-black uppercase border-2 border-transparent hover:border-white transition-all flex items-center gap-2"
@@ -247,16 +289,28 @@ const LiveRoom: React.FC<{ roomData: any; onLeave: () => void }> = ({ roomData, 
                 {/* Left Panel - Study Space (75%) */}
                 <main className="flex-1 bg-dots p-4 overflow-y-auto relative flex flex-col">
 
-                    {/* Mock Shared Content */}
+                    {/* Content Container */}
                     <div className="flex-1 bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,0.2)] flex flex-col relative overflow-hidden">
 
                         {/* Toolbar */}
                         <div className="bg-gray-100 border-b-4 border-black p-2 flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <button className="px-3 py-1 bg-black text-white text-xs font-black uppercase flex items-center gap-2">
-                                    <FileText size={12} /> Viewing: DBMS_2024_Q15.pdf <ChevronDown size={12} />
+                                <button
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="px-3 py-1 bg-black text-white text-xs font-black uppercase flex items-center gap-2 hover:bg-gray-800 active:scale-95 transition-all"
+                                >
+                                    <Upload size={12} /> Load Document
                                 </button>
-                                <span className="text-xs font-bold uppercase text-gray-500 ml-2">Page 3 of 12</span>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    className="hidden"
+                                    accept=".pdf,image/*"
+                                    onChange={handleFileUpload}
+                                />
+                                <span className="text-xs font-bold uppercase text-gray-500 ml-2 truncate max-w-[200px]">
+                                    {docName}
+                                </span>
                             </div>
                             <div className="flex gap-2">
                                 <button className="p-1 hover:bg-gray-200 border-2 border-transparent hover:border-black transition-all"><Monitor size={16} /></button>
@@ -264,27 +318,27 @@ const LiveRoom: React.FC<{ roomData: any; onLeave: () => void }> = ({ roomData, 
                             </div>
                         </div>
 
-                        {/* PDF Viewer Simulation */}
-                        <div className="flex-1 bg-gray-50 p-8 overflow-y-auto flex items-center justify-center">
-                            <div className="w-full max-w-3xl bg-white border-2 border-gray-300 shadow-lg min-h-[600px] p-12 relative">
-                                {/* Simulated PDF Content */}
-                                <div className="w-3/4 h-8 bg-gray-200 mb-6"></div>
-                                <div className="space-y-4">
-                                    <div className="w-full h-4 bg-gray-100"></div>
-                                    <div className="w-full h-4 bg-gray-100"></div>
-                                    <div className="w-5/6 h-4 bg-gray-100"></div>
-                                    <div className="w-full h-4 bg-gray-100"></div>
+                        {/* Document Viewer */}
+                        <div className="flex-1 bg-gray-50 p-4 md:p-8 overflow-y-auto flex items-center justify-center relative">
+                            {currentDoc ? (
+                                <iframe
+                                    src={currentDoc}
+                                    className="w-full h-full border-2 border-black bg-white shadow-lg"
+                                    title="Document Viewer"
+                                />
+                            ) : (
+                                <div className="w-full max-w-2xl bg-white border-4 border-dashed border-gray-300 p-12 text-center rounded-xl hover:border-black hover:bg-gray-50 transition-all group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                                        <Upload size={32} className="text-gray-400 group-hover:text-black" />
+                                    </div>
+                                    <h3 className="text-2xl font-black uppercase text-gray-400 group-hover:text-black mb-2">Drop it like it's hot</h3>
+                                    <p className="font-bold text-gray-400 text-sm uppercase">Upload visual notes, PDF, or diagrams to study.</p>
                                 </div>
-                                <div className="mt-12 p-6 border-2 border-dashed border-red-300 bg-red-50">
-                                    <h3 className="font-bold text-red-800 uppercase mb-2">Question 15 (10 Marks)</h3>
-                                    <p className="font-mono text-sm">Consider a relation R(A, B, C, D, E) with FDs: A→B, BC→E, E→DA. Decompose R into BCNF.</p>
-                                </div>
-                                <div className="absolute top-4 right-4 text-xs font-bold text-gray-400 rotate-90 origin-top-right">SANKALAN VIEWER</div>
-                            </div>
+                            )}
                         </div>
 
                         {/* Floating Action Bar */}
-                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-black/90 px-6 py-3 rounded-full border-2 border-white/20 backdrop-blur-md shadow-2xl">
+                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-black/90 px-6 py-3 rounded-full border-2 border-white/20 backdrop-blur-md shadow-2xl z-20">
                             <button
                                 onClick={() => { playClick(); setMicOn(!micOn); }}
                                 className={`p-3 rounded-full transition-colors ${micOn ? 'bg-white text-black' : 'bg-gray-700 text-white hover:bg-gray-600'}`}
@@ -344,64 +398,55 @@ const LiveRoom: React.FC<{ roomData: any; onLeave: () => void }> = ({ roomData, 
                         </div>
                     </div>
 
-                    {/* Members List */}
-                    <div className="p-4 border-b-4 border-black bg-white flex-1 overflow-y-auto max-h-[200px] md:max-h-[300px]">
-                        <h3 className="font-black uppercase text-xs text-gray-500 mb-3 flex justify-between">
-                            Members <span>4/8</span>
+                    {/* Task Tracker (New) */}
+                    <div className="p-4 border-b-4 border-black bg-white flex-1 overflow-y-auto max-h-[300px]">
+                        <h3 className="font-black uppercase text-xs text-gray-500 mb-3 flex justify-between items-center">
+                            Session Goals <span className="bg-black text-white px-2 rounded-full text-[10px]">{tasks.filter(t => t.done).length}/{tasks.length}</span>
                         </h3>
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-purple-100 border-2 border-black flex items-center justify-center text-xs font-black">YO</div>
-                                <div className="flex-1">
-                                    <div className="font-bold text-sm uppercase">You</div>
-                                    <div className="text-[10px] font-bold text-green-600">Studying...</div>
+
+                        <div className="space-y-2 mb-4">
+                            {tasks.map(task => (
+                                <div key={task.id} onClick={() => toggleTask(task.id)} className={`flex items-start gap-2 cursor-pointer group select-none ${task.done ? 'opacity-50' : ''}`}>
+                                    {task.done ? <CheckSquare size={16} className="shrink-0 mt-0.5" /> : <Square size={16} className="shrink-0 mt-0.5 group-hover:fill-gray-100" />}
+                                    <span className={`text-xs font-bold uppercase leading-tight ${task.done ? 'line-through' : ''}`}>{task.text}</span>
                                 </div>
-                                <MicOff size={14} className="text-gray-400" />
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-blue-100 border-2 border-black flex items-center justify-center text-xs font-black">RA</div>
-                                <div className="flex-1">
-                                    <div className="font-bold text-sm uppercase">Rahul</div>
-                                    <div className="text-[10px] font-bold text-yellow-600">On Break</div>
-                                </div>
-                                <MicOff size={14} className="text-gray-400" />
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-pink-100 border-2 border-black flex items-center justify-center text-xs font-black">PR</div>
-                                <div className="flex-1">
-                                    <div className="font-bold text-sm uppercase">Priya</div>
-                                    <div className="text-[10px] font-bold text-green-600">Studying...</div>
-                                </div>
-                                <Mic size={14} className="text-green-500 animate-pulse" />
-                            </div>
-                            <div className="flex items-center gap-3 opacity-50">
-                                <div className="w-8 h-8 rounded-full bg-gray-100 border-2 border-black flex items-center justify-center text-xs font-black">AM</div>
-                                <div className="flex-1">
-                                    <div className="font-bold text-sm uppercase">Amit</div>
-                                    <div className="text-[10px] font-bold text-gray-500">AFK - 5m</div>
-                                </div>
-                            </div>
+                            ))}
+                            {tasks.length === 0 && <div className="text-[10px] text-gray-400 italic text-center py-2">No active tasks. Add one below!</div>}
                         </div>
+
+                        <form onSubmit={handleAddTask} className="flex gap-2">
+                            <input
+                                type="text"
+                                value={newTask}
+                                onChange={e => setNewTask(e.target.value)}
+                                placeholder="Add goal..."
+                                className="flex-1 bg-gray-50 border-2 border-gray-200 p-1 text-xs font-bold uppercase focus:border-black outline-none"
+                            />
+                            <button type="submit" onClick={playClick} className="bg-black text-white p-1 border-2 border-black hover:bg-gray-800"><MessageSquare size={12} className="rotate-90" /></button>
+                        </form>
                     </div>
 
                     {/* Chat Section */}
-                    <div className="flex-1 flex flex-col min-h-[200px] bg-gray-50">
-                        <div className="p-2 border-b-2 border-gray-200">
-                            <h3 className="font-black uppercase text-xs text-gray-500">Quick Chat</h3>
+                    <div className="flex-1 flex flex-col min-h-[250px] bg-gray-50">
+                        <div className="p-2 border-b-2 border-gray-200 flex justify-between items-center bg-white">
+                            <h3 className="font-black uppercase text-xs text-gray-500">Live Chat</h3>
+                            <div className="flex -space-x-1">
+                                {[1, 2, 3].map(i => <div key={i} className="w-4 h-4 rounded-full bg-gray-300 border border-white"></div>)}
+                            </div>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
                             {messages.map((msg, i) => (
-                                <div key={i} className={`flex flex-col ${msg.user === 'You' ? 'items-end' : (msg.user === 'SYSTEM' ? 'items-center' : 'items-start')}`}>
+                                <div key={i} className={`flex flex-col ${msg.user === 'You' ? 'items-end' : (msg.user === 'SYSTEM' ? 'items-center' : 'items-start')} animate-in slide-in-from-bottom-2`}>
                                     {msg.user === 'SYSTEM' ? (
-                                        <div className="bg-blue-100 text-blue-800 text-[10px] font-bold px-3 py-1 rounded-full uppercase border-2 border-blue-200 shadow-sm animate-bounce">
+                                        <div className="bg-blue-100 text-blue-800 text-[10px] font-bold px-3 py-1 rounded-full uppercase border-2 border-blue-200 shadow-sm animate-bounce my-2">
                                             {msg.text}
                                         </div>
                                     ) : (
                                         <>
-                                            <div className={`max-w-[85%] p-2 border-2 border-black text-xs font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)] ${msg.user === 'You' ? 'bg-black text-white' : 'bg-white'}`}>
+                                            <div className={`max-w-[85%] p-2 rounded-lg border-2 border-black text-xs font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] ${msg.user === 'You' ? 'bg-[#dcf8c6] rounded-tr-none' : 'bg-white rounded-tl-none'}`}>
                                                 {msg.text}
                                             </div>
-                                            <span className="text-[10px] text-gray-400 mt-1 uppercase font-bold">{msg.user} • {msg.time}</span>
+                                            <span className="text-[9px] text-gray-400 mt-1 uppercase font-bold">{msg.user} • {msg.time}</span>
                                         </>
                                     )}
                                 </div>
