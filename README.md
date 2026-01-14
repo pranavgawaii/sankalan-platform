@@ -139,5 +139,4 @@ sankalan/
 
 <div align="center">
   <p>Built with 🖤 by <strong>Pranav Gawai</strong></p>
-  <img src="https://img.shields.io/badge/MADE%20IN-PUNE-orange?style=for-the-badge" alt="" />
 </div>
