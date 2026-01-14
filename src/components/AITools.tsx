@@ -79,6 +79,12 @@ const AITools: React.FC = () => {
 
     const handleToolLaunch = (toolId: string) => {
         playClick();
+
+        if (toolId === 'resume') {
+            setActiveTool(toolId);
+            return;
+        }
+
         // Always show key modal first as requested by user
         setPendingToolId(toolId);
         setShowKeyModal(true);

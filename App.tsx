@@ -1603,12 +1603,15 @@ export default function App() {
   const [view, setView] = useState<View>('landing');
   const [authMode, setAuthMode] = useState<AuthMode>('signin');
 
-  const [profile, setProfile] = useState<UserProfile>({
-    name: 'Guest',
-    branch: '',
-    year: '',
-    semester: '',
-    role: 'student'
+  const [profile, setProfile] = useState<UserProfile>(() => {
+    const saved = localStorage.getItem('user_profile');
+    return saved ? JSON.parse(saved) : {
+      name: 'Guest',
+      branch: '',
+      year: '',
+      semester: '',
+      role: 'student'
+    };
   });
 
   const [globalProfileOpen, setGlobalProfileOpen] = useState(false);
@@ -1742,7 +1745,11 @@ export default function App() {
   }
 
   const handleOnboardingComplete = (updatedProfile: Partial<UserProfile>) => {
-    setProfile(prev => ({ ...prev, ...updatedProfile as UserProfile }));
+    setProfile(prev => {
+      const newProfile = { ...prev, ...updatedProfile as UserProfile };
+      localStorage.setItem('user_profile', JSON.stringify(newProfile));
+      return newProfile;
+    });
     setView('dashboard');
     window.scrollTo(0, 0);
   };

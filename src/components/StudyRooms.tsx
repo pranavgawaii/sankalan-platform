@@ -139,6 +139,8 @@ const CreateRoomModal: React.FC<{ isOpen: boolean; onClose: () => void; onCreate
 const StudyRooms: React.FC<{ rooms: Room[]; onCreateRoom: (room: any) => void; onJoinRoom: (roomId: string) => void }> = ({ rooms, onCreateRoom, onJoinRoom }) => {
     const playClick = useSound();
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showJoinInput, setShowJoinInput] = useState(false);
+    const [joinCode, setJoinCode] = useState('');
 
     return (
         <div className="min-h-screen bg-dots pt-24 pb-20 px-4">
@@ -214,13 +216,49 @@ const StudyRooms: React.FC<{ rooms: Room[]; onCreateRoom: (room: any) => void; o
                     ))}
 
                     {/* Placeholder for 'No more rooms' or 'Join by code' */}
-                    <div className="border-4 border-dashed border-gray-400 p-6 flex flex-col items-center justify-center text-center gap-4 text-gray-400 hover:border-black hover:text-black transition-colors cursor-pointer group h-full min-h-[300px]" onClick={playClick}>
-                        <div className="w-16 h-16 border-4 border-current mb-2 flex items-center justify-center rounded-full group-hover:scale-110 transition-transform">
-                            <Monitor size={32} />
+                    {!showJoinInput ? (
+                        <div
+                            className="border-4 border-dashed border-gray-400 p-6 flex flex-col items-center justify-center text-center gap-4 text-gray-400 hover:border-black hover:text-black transition-colors cursor-pointer group h-full min-h-[300px]"
+                            onClick={() => { playClick(); setShowJoinInput(true); }}
+                        >
+                            <div className="w-16 h-16 border-4 border-current mb-2 flex items-center justify-center rounded-full group-hover:scale-110 transition-transform">
+                                <Monitor size={32} />
+                            </div>
+                            <h3 className="text-xl font-black uppercase">Join by Room Code</h3>
+                            <p className="font-bold text-sm max-w-[200px]">Have a specific code from a friend? Enter it here to jump in.</p>
                         </div>
-                        <h3 className="text-xl font-black uppercase">Join by Room Code</h3>
-                        <p className="font-bold text-sm max-w-[200px]">Have a specific code from a friend? Enter it here to jump in.</p>
-                    </div>
+                    ) : (
+                        <div className="bg-black text-white border-4 border-black p-6 flex flex-col justify-center h-full min-h-[300px] animate-in fade-in zoom-in duration-200">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-xl font-black uppercase flex items-center gap-2">
+                                    <Monitor size={24} /> Enter Code
+                                </h3>
+                                <button onClick={() => setShowJoinInput(false)}><X size={20} /></button>
+                            </div>
+                            <div className="space-y-4">
+                                <input
+                                    autoFocus
+                                    type="text"
+                                    placeholder="e.g. 123-456"
+                                    value={joinCode}
+                                    onChange={(e) => setJoinCode(e.target.value)}
+                                    className="w-full bg-white text-black border-4 border-white p-3 font-black uppercase text-center text-xl focus:outline-none"
+                                />
+                                <button
+                                    onClick={() => {
+                                        if (joinCode.trim()) {
+                                            playClick();
+                                            onJoinRoom(joinCode);
+                                        }
+                                    }}
+                                    className="w-full bg-white text-black py-3 font-black uppercase border-4 border-white hover:bg-gray-200 transition-colors"
+                                >
+                                    Join Room →
+                                </button>
+                            </div>
+                            <p className="text-[10px] font-bold uppercase text-center mt-4 opacity-50">Ask your host for the Room ID</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* My History Section */}

@@ -215,7 +215,13 @@ const LiveRoom: React.FC<{ roomData: any; onLeave: () => void }> = ({ roomData, 
                     <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
                     <div>
                         <h1 className="font-black uppercase text-sm md:text-lg tracking-wide">{roomData.title}</h1>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase">Room ID: #{roomData.id.slice(-4)} • {roomData.type} Mode</p>
+                        <div className="flex items-center gap-2 mt-1">
+                            <div className="bg-white text-black px-2 py-0.5 text-[10px] font-black uppercase border-2 border-gray-400 flex items-center gap-2 cursor-pointer hover:bg-gray-200" onClick={() => { navigator.clipboard.writeText(roomData.id); playClick(); alert('Room Code Copied!'); }}>
+                                <span>CODE: {roomData.id}</span>
+                                <FileText size={10} />
+                            </div>
+                            <span className="text-[10px] font-bold text-gray-500 uppercase">• {roomData.type} Mode</span>
+                        </div>
                     </div>
                 </div>
 
