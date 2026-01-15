@@ -27,41 +27,43 @@ const RESOURCES_COLLECTION = 'resources';
  */
 export const fetchStudyMaterials = async (filters: StudyFilter = {}) => {
     const timestamp = new Date().toISOString();
-    console.log(`🔥 [${timestamp}] fetchStudyMaterials called with filters:`, filters);
+    console.log(`🔥 [${timestamp}] fetchStudyMaterials called with filters:`, JSON.stringify(filters, null, 2));
 
     try {
         const resourcesRef = collection(db, RESOURCES_COLLECTION);
-        console.log(`📚 [${timestamp}] Accessing collection: ${RESOURCES_COLLECTION}`);
         const constraints = [];
 
-        // Apply filters
-        if (filters.subject && filters.subject !== 'ALL') {
-            constraints.push(where('subject', '==', filters.subject));
+        // 1. Branch Filter (Required/Primary)
+        if (filters.branch && filters.branch !== 'ALL') {
+            constraints.push(where('branch', '==', filters.branch));
         }
 
-        if (filters.type && filters.type !== 'all' && filters.type !== 'ALL') {
-            // If type is specifically 'pyq' or 'note', filter by it.
-            // Note: The UI might use 'pdf'/'pptx' as types too, so we need to be careful.
-            // Only filter if it maps to a valid DB type field or if we trust the input.
-            constraints.push(where('type', '==', filters.type));
-        }
-
-        if (filters.semester && filters.semester !== 'ALL') {
-            constraints.push(where('semester', '==', filters.semester));
-        }
-
+        // 2. Year Filter (Number)
         if (filters.year && filters.year !== 'ALL') {
-            constraints.push(where('year', '==', filters.year));
+            const yearNum = Number(filters.year);
+            console.log(`🔢 [${timestamp}] Filtering by year:`, yearNum, typeof yearNum);
+            if (!isNaN(yearNum)) {
+                constraints.push(where('year', '==', yearNum));
+            } else {
+                console.warn(`⚠️ [${timestamp}] Invalid year filter:`, filters.year);
+            }
         }
 
-        // Add sorting
-        // Note: Firestore requires an index for compound queries with orderBy.
-        // We will try to order by createdAt if possible, but might fail without index.
-        // For now, let's just fetch and sort client-side if needed to avoid index errors during dev.
-        // constraints.push(orderBy('createdAt', 'desc'));
+        // 3. Subject Filter (subjectCode or subjectName)
+        if (filters.subject && filters.subject !== 'ALL') {
+            console.log(`📘 [${timestamp}] Filtering by subject code:`, filters.subject);
+            constraints.push(where('subjectCode', '==', filters.subject));
+        }
+
+        console.log(`🛒 [${timestamp}] Query constraints count:`, constraints.length);
 
         const q = query(resourcesRef, ...constraints);
         const querySnapshot = await getDocs(q);
+
+        console.log(`📦 [${timestamp}] Documents found:`, querySnapshot.size);
+        if (querySnapshot.empty) {
+            console.log(`⚠️ [${timestamp}] No documents found for constraints. Check if 'type' or other fields match.`);
+        }
 
         const materials = querySnapshot.docs.map(doc => ({
             id: doc.id,

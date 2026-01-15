@@ -8,6 +8,8 @@ import {
   Menu,
   X,
   Target,
+  ArrowRight,
+  Sparkles,
   Zap,
   BarChart3,
   Trophy,
@@ -15,7 +17,6 @@ import {
   Users,
   CheckCircle2,
   GraduationCap,
-  Sparkles,
   Frown,
   Smile,
   AlertTriangle,
@@ -26,7 +27,6 @@ import {
   Lock,
   ArrowLeft,
   Mail,
-  ArrowRight,
   UserCheck,
   Bell,
   User,
@@ -42,7 +42,10 @@ import {
   Volume2,
   VolumeX,
   Headphones,
-  Edit2
+
+  Edit2,
+  Upload,
+  CloudUpload
 } from 'lucide-react';
 import { useSoundContext } from './src/context/SoundContext';
 
@@ -83,6 +86,7 @@ interface PYQPaper {
   views: number;
   downloads: number;
   fileUrl?: string; // Real PDF URL from Firebase
+  examYear?: number;
 }
 
 // --- Mock Data ---
@@ -100,8 +104,16 @@ const MOCK_PAPERS: PYQPaper[] = [
   { id: '10', subject: 'DSA', type: 'SummerTerm', year: 2023, pages: 45, views: 50, downloads: 20 },
 ];
 
-const SUBJECTS = ['ALL', 'DBMS', 'CN', 'OS', 'ML', 'CD', 'TOC'];
-const YEARS = ['ALL', 2024, 2023, 2022, 2021, 2020];
+const SUBJECT_SHORTS = [
+  { code: 'ALL', name: 'ALL' },
+  { code: 'MFC-1', name: 'MATHEMATICAL FOUNDATIONS FOR COMPUTING - I' },
+  { code: 'MCD', name: 'MATERIALS FOR COMPUTING DEVICES' },
+  { code: 'EP', name: 'ENGINEERING PHYSICS' },
+  { code: 'EEE', name: 'ELECTRICAL AND ELECTRONICS ENGINEERING' },
+  { code: 'DELD', name: 'DIGITAL ELECTRONICS AND LOGIC DESIGN' },
+  { code: 'MFC-2', name: 'MATHEMATICAL FOUNDATIONS FOR COMPUTING - II' }
+];
+const YEARS = ['ALL', '1', '2', '3', '4'];
 const TYPES = ['ALL', 'TA1', 'TA2', 'EndSem', 'SummerTerm'];
 const BRANCHES = ['ALL', 'CSE', 'ECE', 'ME', 'CE', 'IT'];
 
@@ -227,49 +239,91 @@ const PYQBrowseView: React.FC<{
 }> = ({ profile, onLogout, setView }) => {
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [contributeOpen, setContributeOpen] = useState(false); // New State
+  const playClick = useSound();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('ALL');
-  const [selectedBranch, setSelectedBranch] = useState(profile.branch || 'CSE');
-  const [selectedYear, setSelectedYear] = useState('ALL');
+
+  // Use Global Profile State for Filters
+  const selectedBranch = profile.branch || 'CSE';
+  // Correctly parse year from profile (stored as '1', '2' etc string)
+  const selectedYear = profile.year || '1';
   const [selectedType, setSelectedType] = useState('ALL');
   const [selectedPaper, setSelectedPaper] = useState<PYQPaper | null>(null);
 
+  // Helper for Year Format
+  const formatYear = (y: string | number) => {
+    const map: Record<string, string> = { '1': '1ST YEAR', '2': '2ND YEAR', '3': '3RD YEAR', '4': '4TH YEAR' };
+    return map[String(y)] || `${y}TH YEAR`;
+  };
+
   // --- Firebase Integration ---
-  const { materials } = useStudyMaterials(selectedSubject === 'ALL' ? undefined : selectedSubject, {
-    branch: selectedBranch === 'ALL' ? undefined : selectedBranch
-  });
+  // FETCH ALL PAPERS for valid Client-Side Filtering (Fuzzy Match)
+  // We pass 'undefined' as subject so Firestore returns everything for this Branch/Year
+  const { materials, loading, error } = useStudyMaterials(
+    undefined,
+    {
+      branch: selectedBranch,
+      year: selectedYear
+    }
+  );
 
   const realPapers: PYQPaper[] = useMemo(() => {
-    return materials
-      .filter(m => m.type === 'pyq')
-      .map(m => ({
-        id: m.id,
-        subject: m.subject,
-        type: (m.title.toLowerCase().includes('mid') || m.title.toLowerCase().includes('unit')) ? 'TA1' : 'EndSem',
-        year: m.year ? Number(m.year) : 2025,
-        pages: 12,
-        views: m.views || 0,
-        downloads: 0,
-        fileUrl: m.fileUrl
-      }));
+    // Note: useStudyMaterials might return mixed case subjects.
+    // We rely on exact matches or need to normalize.
+    return materials.map(m => ({
+      id: m.id,
+      subject: m.subject, // Ensure this matches dropdown values if strictly filtering
+      type: (m.title.toLowerCase().includes('mid') || m.title.toLowerCase().includes('unit')) ? 'TA1' : 'EndSem',
+      year: m.year ? Number(m.year) : 1,
+      examYear: m.examYear || 2024,
+      pages: 12,
+      views: m.views || 0,
+      downloads: 0,
+      fileUrl: m.fileUrl
+    }));
   }, [materials]);
 
   const filteredPapers = useMemo(() => {
-    const allPapers = [...realPapers, ...MOCK_PAPERS];
+    // Filter mainly by Search and Type locally.
+    // Branch/Year filtering is done by fetch/profile context.
+    // Subject filtering is done by fetch, but we double check if needed or for mocks.
+    // MOCK_PAPERS need to be filtered by selectedBranch too if they have it
+    const relevantMocks = MOCK_PAPERS.filter(p => true); // Mocks are generic for now
+
+    const allPapers = [...realPapers]; // Add mocks if needed, but for "Real" flow just use realPapers
+
     return allPapers.filter(p => {
       const matchesSearch = searchQuery === '' || p.subject.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesSubject = selectedSubject === 'ALL' || p.subject === selectedSubject;
-      const matchesYear = selectedYear === 'ALL' || p.year === Number(selectedYear);
+
+      // Robust Subject Matching (Handle Roman/Arabic numerals and spacing)
+      // Aggressive Normalization: Strip non-alphanumeric, handle Roman Numerals
+      const normalize = (s: string) => {
+        let clean = s.toUpperCase();
+        // Handle Roman Numerals at end of string or before typical separators
+        clean = clean.replace(/(\s|-)+I$/, '1');   // Ends in I -> 1
+        clean = clean.replace(/(\s|-)+II$/, '2');  // Ends in II -> 2
+        clean = clean.replace(/(\s|-)+I(\s|$)/, '1$2'); // I in middle
+        clean = clean.replace(/(\s|-)+II(\s|$)/, '2$2'); // II in middle
+
+        // Remove ALL non-alphanumeric characters for fuzzy matching
+        return clean.replace(/[^A-Z0-9]/g, '');
+      };
+
+      const pSubject = normalize(p.subject);
+      const sSubject = normalize(selectedSubject);
+
+      const matchesSubject = selectedSubject === 'ALL' ||
+        pSubject.includes(sSubject) ||
+        sSubject.includes(pSubject);
+
       const matchesType = selectedType === 'ALL' || p.type === selectedType;
-      // We don't filter by branch strictly for mocks as they lack branch data, 
-      // but for real papers the hook handles it.
-      // If we wanted client side filtering:
-      // const matchesBranch = selectedBranch === 'ALL' || p.branch === selectedBranch; 
 
-      return matchesSearch && matchesSubject && matchesYear && matchesType;
+      return matchesSearch && matchesSubject && matchesType;
     });
-  }, [searchQuery, selectedSubject, selectedYear, selectedType, realPapers, selectedBranch]);
+  }, [searchQuery, selectedSubject, selectedType, realPapers]);
 
+  // ... handlePaperView ...
   const handlePaperView = (paper: PYQPaper) => {
     if (paper.fileUrl) {
       trackView(paper.id);
@@ -291,57 +345,46 @@ const PYQBrowseView: React.FC<{
       />
 
       <main className="container mx-auto px-4 py-8 max-w-6xl space-y-8">
-        {/* Page Header */}
-        <div className="bg-black text-white p-10 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-          <h2 className="text-5xl md:text-6xl font-black uppercase tracking-tighter mb-4 flex items-center gap-4">
-            📚 BROWSE PYQS
-          </h2>
-          <div className="h-2 bg-white w-48 mb-6"></div>
-          <p className="text-xl font-bold uppercase tracking-widest opacity-80">
-            Access 500+ previous year question papers organized for {profile.branch}
-          </p>
-        </div>
+        {/* Page Header with Context - REDESIGNED */}
+        <div className="bg-black text-white p-8 md:p-10 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row justify-between items-start md:items-end gap-8 relative overflow-hidden">
+          {/* Background Decoration */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-gray-900 rounded-full blur-[100px] pointer-events-none opacity-50"></div>
 
-        {/* Filters Bar - Sticky */}
-        <div className="sticky top-[72px] z-40 bg-white border-4 border-black p-4 flex flex-col md:flex-row items-center gap-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-          <div className="flex flex-wrap gap-4 w-full md:w-auto">
-            <div className="flex items-center gap-2 border-2 border-black px-3 py-2">
-              <span className="text-[10px] font-black uppercase">SUB:</span>
-              <select
-                value={selectedSubject}
-                onChange={(e) => setSelectedSubject(e.target.value)}
-                className="bg-transparent font-bold uppercase text-xs focus:outline-none"
-              >
-                {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-            <div className="flex items-center gap-2 border-2 border-black px-3 py-2">
-              <span className="text-[10px] font-black uppercase">YEAR:</span>
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(e.target.value)}
-                className="bg-transparent font-bold uppercase text-xs focus:outline-none"
-              >
-                {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-              </select>
-            </div>
-            <div className="flex items-center gap-2 border-2 border-black px-3 py-2">
-              <span className="text-[10px] font-black uppercase">TYPE:</span>
-              <select
-                value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value)}
-                className="bg-transparent font-bold uppercase text-xs focus:outline-none"
-              >
-                {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
-            </div>
+          <div className="relative z-10 max-w-2xl">
+            <h2 className="text-5xl md:text-6xl font-black uppercase tracking-tighter mb-4 flex items-center gap-4">
+              📚 BROWSE PYQS
+            </h2>
+            <div className="h-2 bg-white w-32 mb-6"></div>
+            <p className="text-xl font-bold uppercase tracking-widest opacity-90 mb-2">
+              Showing Papers for <span className="bg-white text-black px-2 py-0.5">{selectedBranch}</span> • <span className="bg-white text-black px-2 py-0.5">{formatYear(selectedYear)}</span>
+            </p>
+            <p className="text-sm font-bold uppercase opacity-50">
+              Select a subject below to filter the archive.
+            </p>
           </div>
 
-          <div className="relative flex-1 w-full md:w-auto">
+          {/* Contribute CTA */}
+          <div className="relative z-10 flex flex-col items-start md:items-end gap-3 text-right">
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#FFC900] animate-pulse">Missing something?</span>
+              <span className="text-sm font-bold uppercase opacity-60 max-w-xs leading-tight">Help your juniors by uploading missing papers.</span>
+            </div>
+            <button
+              onClick={() => setContributeOpen(true)}
+              className="bg-white text-black px-6 py-3 font-black uppercase tracking-widest hover:bg-[#FFC900] hover:scale-105 transition-all shadow-[4px_4px_0px_0px_rgba(50,50,50,0.5)] flex items-center gap-2"
+            >
+              <Upload size={18} strokeWidth={2.5} /> CONTRIBUTE PAPER
+            </button>
+          </div>
+        </div>
+
+        {/* Filters Bar - Simplified (Only Search) */}
+        <div className="sticky top-[72px] z-40 bg-white border-4 border-black p-4 flex flex-col md:flex-row items-center gap-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40" size={18} />
             <input
               type="text"
-              placeholder="Search papers..."
+              placeholder="SEARCH TOPICS..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border-2 border-black font-bold focus:outline-none focus:bg-gray-50 uppercase text-xs"
@@ -350,55 +393,82 @@ const PYQBrowseView: React.FC<{
 
           <div className="hidden md:block border-l-2 border-black h-8 mx-2"></div>
           <p className="text-[10px] font-black uppercase tracking-widest opacity-50 whitespace-nowrap">
-            📁 {profile.branch} • {profile.semester} • {filteredPapers.length} Papers
+            {filteredPapers.length} PAPERS FOUND
           </p>
         </div>
 
-        {/* Subject Tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
-          {SUBJECTS.map(subj => (
+        {/* Horizontal Subject Scroll List */}
+        <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+          {SUBJECT_SHORTS.map((subject) => (
             <button
-              key={subj}
-              onClick={() => setSelectedSubject(subj)}
-              className={`px-6 py-2 border-4 border-black font-black uppercase text-xs whitespace-nowrap transition-all ${selectedSubject === subj ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'}`}
+              key={subject.code}
+              onClick={() => {
+                playClick();
+                setSelectedSubject(subject.name); // Set full name for filtering
+              }}
+              className={`flex-shrink-0 px-6 py-3 border-4 border-black text-sm font-black uppercase tracking-widest transition-all ${selectedSubject === subject.name ? 'bg-black text-white shadow-[4px_4px_0px_0px_rgba(100,100,100,0.5)] transform -translate-y-1' : 'bg-white text-black hover:bg-gray-100'}`}
             >
-              {subj}
+              {subject.code}
             </button>
           ))}
         </div>
 
-        {/* PYQ Grid */}
-        {filteredPapers.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredPapers.map((paper) => (
-              <div
-                key={paper.id}
-                className="bg-white border-4 border-black p-8 hover:translate-y-[-8px] hover:translate-x-[-8px] hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transition-all group flex flex-col justify-between"
-              >
-                <div>
-                  <h4 className="text-3xl font-black uppercase tracking-tighter mb-1">{paper.subject}</h4>
-                  <div className="h-1 bg-black w-12 mb-4 group-hover:w-full transition-all duration-300"></div>
-                  <p className="text-lg font-black uppercase tracking-widest mb-6 opacity-60">{paper.type} {paper.year}</p>
+        {/* Subject Tabs */}
+        {/* Subject Tabs - REMOVED (Empty/Confusing for now) */}
+        {/* <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">...</div> */}
 
-                  <div className="space-y-3 mb-8 text-[10px] font-black uppercase tracking-widest text-gray-400">
-                    <div className="flex items-center gap-3"><FileText size={14} /> {paper.pages} PAGES</div>
-                    <div className="flex items-center gap-3"><Eye size={14} /> {paper.views} VIEWS</div>
-                    <div className="flex items-center gap-3"><Download size={14} /> {paper.downloads} DOWNLOADS</div>
+        {/* PYQ Cards Grid */}
+        {filteredPapers.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredPapers.map((paper) => (
+              <motion.div
+                key={paper.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="group bg-white border-4 border-black hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 relative overflow-hidden flex flex-col justify-between min-h-[300px]"
+                onClick={() => handlePaperView(paper)}
+              >
+                {/* Minimalist Watermark */}
+                <div className="absolute -right-8 -top-8 text-[120px] font-black text-gray-50 opacity-10 select-none z-0 pointer-events-none group-hover:scale-110 transition-transform duration-500">
+                  {paper.subject.charAt(0)}
+                </div>
+
+                <div className="p-8 relative z-10 flex flex-col h-full">
+                  {/* Top Meta Row */}
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="flex flex-wrap gap-2">
+                      <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest border-2 border-black ${paper.type === 'EndSem' ? 'bg-black text-white' : 'bg-white text-black'}`}>
+                        {paper.type}
+                      </span>
+                      <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest border-2 border-black bg-white text-black">
+                        {paper.examYear}
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                      {formatYear(paper.year)}
+                    </span>
+                  </div>
+
+                  {/* Hero Title */}
+                  <h3 className="text-2xl font-black uppercase tracking-tighter leading-none mb-4 line-clamp-3 group-hover:underline decoration-4 underline-offset-4 decoration-black">
+                    {paper.subject}
+                  </h3>
+
+                  {/* Spacer to push footer down */}
+                  <div className="flex-1"></div>
+
+                  {/* Action Footer */}
+                  <div className="pt-6 mt-6 border-t-2 border-gray-100 group-hover:border-black transition-colors flex items-center justify-between">
+                    <span className="text-xs font-black uppercase tracking-widest text-gray-400 group-hover:text-black transition-colors flex items-center gap-2">
+                      <FileText size={14} strokeWidth={2.5} />
+                      VIEW PAPER
+                    </span>
+                    <div className="w-8 h-8 rounded-full border-2 border-transparent group-hover:border-black flex items-center justify-center transition-all group-hover:bg-black group-hover:text-white">
+                      <ArrowRight size={16} strokeWidth={3} className="transform -rotate-45 group-hover:rotate-0 transition-transform duration-300" />
+                    </div>
                   </div>
                 </div>
-
-                <div className="space-y-3">
-                  <button
-                    onClick={() => handlePaperView(paper)}
-                    className="w-full bg-black text-white py-4 border-4 border-black font-black uppercase tracking-widest hover:bg-gray-900 transition-colors flex items-center justify-center gap-2"
-                  >
-                    VIEW PDF <ExternalLink size={16} />
-                  </button>
-                  <button className="w-full bg-white text-black py-4 border-4 border-black font-black uppercase tracking-widest hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
-                    AI MOCK TEST <Cpu size={16} />
-                  </button>
-                </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         ) : (
@@ -409,13 +479,14 @@ const PYQBrowseView: React.FC<{
               <p className="text-sm font-bold uppercase opacity-50">Try adjusting your filters or search for a different subject.</p>
             </div>
             <button
-              onClick={() => { setSelectedSubject('ALL'); setSelectedYear('ALL'); setSelectedType('ALL'); setSearchQuery(''); }}
+              onClick={() => { setSelectedSubject('ALL'); setSelectedType('ALL'); setSearchQuery(''); }}
               className="retro-btn bg-black text-white px-8 py-3 font-black uppercase tracking-widest"
             >
               CLEAR FILTERS
             </button>
           </div>
-        )}
+        )
+        }
 
         {/* Pagination */}
         <div className="flex justify-center items-center gap-4 py-12">
@@ -427,158 +498,210 @@ const PYQBrowseView: React.FC<{
           </div>
           <button className="px-6 py-2 border-4 border-black font-black uppercase text-xs hover:bg-gray-100 transition-colors">[NEXT →]</button>
         </div>
-      </main>
+      </main >
 
-      {/* PDF Viewer Modal Overlay */}
-      {selectedPaper && (
-        <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-6 backdrop-blur-sm">
-          <div className="bg-white border-8 border-black w-full max-w-5xl h-[90vh] flex flex-col relative animate-in fade-in zoom-in duration-200">
-            {/* Modal Header */}
-            <div className="bg-black text-white p-4 flex items-center justify-between">
-              <div className="flex items-center gap-4">
+      {/* PDF Viewer Modal Overlay - Professional Redesign */}
+      {
+        selectedPaper && (
+          <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-200">
+            <div className="bg-white w-full max-w-6xl h-[90vh] flex flex-col relative shadow-2xl rounded-sm overflow-hidden">
+              {/* Modal Header */}
+              <div className="bg-[#1a1a1a] text-white px-6 py-4 flex items-center justify-between border-b border-gray-800">
+                <div className="">
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="bg-white text-black px-2 py-0.5 text-[10px] font-black uppercase tracking-widest rounded-sm">
+                      {selectedPaper.type}
+                    </span>
+                    <span className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">
+                      {formatYear(selectedPaper.year)} • {selectedPaper.examYear}
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-bold uppercase tracking-tight text-white leading-none">
+                    {selectedPaper.subject}
+                  </h3>
+                </div>
                 <button
                   onClick={() => setSelectedPaper(null)}
-                  className="p-2 border-2 border-white hover:bg-white hover:text-black transition-colors"
+                  className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-all"
                 >
-                  <X size={20} />
+                  <X size={24} strokeWidth={2} />
                 </button>
-                <h3 className="text-xl font-black uppercase tracking-tighter truncate">{selectedPaper.subject} {selectedPaper.type} {selectedPaper.year}</h3>
               </div>
-              <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest hidden md:flex">
-                <span>DOCUMENT ID: {selectedPaper.id}</span>
-                <div className="w-1 h-4 bg-white"></div>
-                <span>PAGE: 1 / {selectedPaper.pages}</span>
-              </div>
-            </div>
 
-            {/* Modal Body - PDF Viewer */}
-            <div className="flex-1 overflow-hidden flex">
-              {selectedPaper.fileUrl ? (
-                <div className="flex-1 bg-gray-200 flex flex-col">
-                  <iframe src={selectedPaper.fileUrl} className="w-full h-full" title="PDF Viewer" />
-                </div>
-              ) : (
-                <div className="flex-1 bg-gray-200 overflow-y-auto p-12 flex flex-col items-center space-y-8">
-                  <div className="w-[600px] h-[800px] bg-white border-4 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] p-12 flex flex-col relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 border-l-4 border-b-4 border-black font-black text-[10px] uppercase">MIT-ADT</div>
-                    <div className="text-center border-b-4 border-black pb-8 mb-8">
-                      <h2 className="text-4xl font-black uppercase tracking-tighter">{selectedPaper.subject}</h2>
-                      <p className="text-sm font-black uppercase tracking-widest opacity-60">END SEMESTER EXAMINATION 2024</p>
-                    </div>
-                    <div className="space-y-6 flex-1">
-                      <div className="h-4 bg-black w-3/4"></div>
-                      <div className="h-4 bg-black w-full"></div>
-                      <div className="h-4 bg-black w-1/2"></div>
-                      <div className="pt-8 space-y-4">
-                        <div className="h-2 bg-gray-200 w-full"></div>
-                        <div className="h-2 bg-gray-200 w-full"></div>
-                        <div className="h-2 bg-gray-200 w-3/4"></div>
-                      </div>
-                      <div className="pt-8">
-                        <p className="text-xs font-black uppercase border-b-2 border-black inline-block">SECTION A: OBJECTIVE QUESTIONS</p>
-                      </div>
-                      <div className="space-y-2">
-                        {[1, 2, 3, 4, 5].map(i => (
-                          <div key={i} className="flex gap-4 items-center">
-                            <div className="w-4 h-4 border-2 border-black"></div>
-                            <div className="h-2 bg-gray-100 flex-1"></div>
-                          </div>
-                        ))}
-                      </div>
+              {/* Modal Body - PDF Viewer */}
+              <div className="flex-1 overflow-hidden flex bg-gray-50">
+                {selectedPaper.fileUrl ? (
+                  <div className="flex-1 bg-[#1a1a1a] flex flex-col items-center justify-center p-4">
+                    {/* PDF Frame wrapper */}
+                    <div className="w-full h-full bg-white shadow-xl">
+                      <iframe src={selectedPaper.fileUrl} className="w-full h-full border-none" title="PDF Viewer" />
                     </div>
                   </div>
-                  {/* Page 2 indicator */}
-                  <div className="text-xs font-black uppercase text-gray-400">↑ END OF PAGE 1 ↑</div>
-                </div>
-              )}
-
-              {/* Sidebar controls */}
-              <div className="w-64 border-l-4 border-black bg-white p-6 space-y-8 hidden md:block">
-                <div className="space-y-2">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">TOOLS</p>
-                  <button
-                    onClick={async () => {
-                      if (selectedPaper?.fileUrl) {
-                        trackDownload(selectedPaper.id);
-                        const filename = `${selectedPaper.subject}_${selectedPaper.type}_${selectedPaper.year}.pdf`;
-                        try {
-                          const response = await fetch(selectedPaper.fileUrl);
-                          if (!response.ok) throw new Error('Network response was not ok');
-                          const blob = await response.blob();
-                          const blobUrl = window.URL.createObjectURL(blob);
-                          const link = document.createElement('a');
-                          link.href = blobUrl;
-                          link.setAttribute('download', filename);
-                          document.body.appendChild(link);
-                          link.click();
-                          link.remove();
-                          window.URL.revokeObjectURL(blobUrl);
-                        } catch (error) {
-                          console.error("Direct download failed, trying fallback:", error);
-                          const link = document.createElement('a');
-                          link.href = selectedPaper.fileUrl;
-                          link.setAttribute('download', filename);
-                          document.body.appendChild(link);
-                          link.click();
-                          link.remove();
-                        }
-                      } else {
-                        alert('Download not available for this paper yet.');
-                      }
-                    }}
-                    className="w-full bg-black text-white p-3 text-xs font-black uppercase border-2 border-black flex items-center gap-2 hover:bg-gray-800"
-                  >
-                    <Download size={14} /> DOWNLOAD PDF
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (selectedPaper?.fileUrl) {
-                        window.open(selectedPaper.fileUrl, '_blank');
-                      }
-                    }}
-                    className="w-full bg-blue-500 text-white p-3 text-xs font-black uppercase border-2 border-black flex items-center gap-2 hover:bg-blue-600"
-                  >
-                    <ExternalLink size={14} /> FULLSCREEN
-                  </button>
-                  <button className="w-full bg-white text-black p-3 text-xs font-black uppercase border-2 border-black flex items-center gap-2 hover:bg-gray-100">
-                    <Sparkles size={14} /> AI EXPLAINER
-                  </button>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">ANNOTATION</p>
-                  <button className="w-full bg-white text-black p-3 text-xs font-black uppercase border-2 border-black flex items-center gap-2 hover:bg-gray-100">
-                    <Target size={14} /> HIGH-YIELD TOPICS
-                  </button>
-                </div>
-                <div className="h-1 bg-stripes border-2 border-black"></div>
-                <div className="space-y-4">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">RELATED PAPERS</p>
-                  {MOCK_PAPERS.slice(0, 2).map(p => (
-                    <div key={p.id} className="p-3 border-2 border-black text-[10px] font-black uppercase hover:bg-gray-50 cursor-pointer">
-                      {p.subject} {p.year}
+                ) : (
+                  <div className="flex-1 bg-gray-100 overflow-y-auto p-12 flex flex-col items-center justify-center space-y-6">
+                    <div className="text-center opacity-40">
+                      <FileText size={64} className="mx-auto mb-4" />
+                      <p className="font-bold uppercase tracking-widest">Preview Not Available</p>
                     </div>
+                  </div>
+                )}
+
+                {/* Sidebar controls */}
+                <div className="w-72 bg-white border-l border-gray-200 p-6 flex flex-col gap-8 shadow-[-4px_0px_20px_rgba(0,0,0,0.05)] z-10">
+
+                  {/* Tools Section */}
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">ACTIONS</p>
+                    <button
+                      onClick={async () => {
+                        if (selectedPaper?.fileUrl) {
+                          trackDownload(selectedPaper.id);
+                          const filename = `${selectedPaper.subject}_${selectedPaper.type}_${selectedPaper.year}.pdf`;
+                          try {
+                            const response = await fetch(selectedPaper.fileUrl);
+                            if (!response.ok) throw new Error('Network response was not ok');
+                            const blob = await response.blob();
+                            const blobUrl = window.URL.createObjectURL(blob);
+                            const link = document.createElement('a');
+                            link.href = blobUrl;
+                            link.setAttribute('download', filename);
+                            document.body.appendChild(link);
+                            link.click();
+                            link.remove();
+                            window.URL.revokeObjectURL(blobUrl);
+                          } catch (error) {
+                            console.error("Direct download failed, trying fallback:", error);
+                            const link = document.createElement('a');
+                            link.href = selectedPaper.fileUrl;
+                            link.setAttribute('download', filename);
+                            document.body.appendChild(link);
+                            link.click();
+                            link.remove();
+                          }
+                        } else {
+                          alert('Download not available for this paper yet.');
+                        }
+                      }}
+                      className="w-full bg-black text-white hover:bg-gray-900 px-4 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all rounded-sm shadow-sm"
+                    >
+                      <Download size={14} strokeWidth={2.5} /> DOWNLOAD
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (selectedPaper?.fileUrl) {
+                          window.open(selectedPaper.fileUrl, '_blank');
+                        }
+                      }}
+                      className="w-full bg-white text-black border border-gray-300 hover:border-black hover:bg-gray-50 px-4 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all rounded-sm"
+                    >
+                      <ExternalLink size={14} strokeWidth={2.5} /> FULLSCREEN
+                    </button>
+                  </div>
+
+                  <div className="h-px bg-gray-100 w-full"></div>
+
+                  {/* AI Features (Coming Soon) */}
+                  <div className="space-y-3 opacity-60">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">INTELLIGENCE</p>
+                    <button disabled className="w-full bg-gray-50 text-gray-400 px-4 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-between gap-2 rounded-sm cursor-not-allowed">
+                      <div className="flex items-center gap-2"><Sparkles size={14} /> EXPLAINER</div>
+                      <span className="text-[9px] font-black bg-gray-200 px-1.5 py-0.5 rounded text-gray-500">SOON</span>
+                    </button>
+                    <button disabled className="w-full bg-gray-50 text-gray-400 px-4 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-between gap-2 rounded-sm cursor-not-allowed">
+                      <div className="flex items-center gap-2"><Target size={14} /> TOPICS</div>
+                      <span className="text-[9px] font-black bg-gray-200 px-1.5 py-0.5 rounded text-gray-500">SOON</span>
+                    </button>
+                  </div>
+
+                  <div className="flex-1"></div>
+
+                  {/* Related Papers (Simplified) */}
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">RELATED</p>
+                    {MOCK_PAPERS.slice(0, 3).map(p => (
+                      <div key={p.id} className="group flex items-center gap-3 p-2 hover:bg-gray-50 rounded-sm cursor-pointer transition-colors">
+                        <div className="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-500 group-hover:bg-black group-hover:text-white transition-colors rounded-full">
+                          <FileText size={14} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-bold uppercase truncate group-hover:underline decoration-1 underline-offset-2">{p.subject}</p>
+                          <p className="text-[9px] text-gray-400 uppercase">{p.type} • {p.year}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* Contribute Modal */}
+      {contributeOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-lg relative shadow-2xl rounded-sm overflow-hidden border-4 border-black">
+            <div className="bg-black text-white px-6 py-4 flex items-center justify-between">
+              <h3 className="text-xl font-black uppercase tracking-tighter flex items-center gap-2">
+                <Upload size={20} /> Contribute Paper
+              </h3>
+              <button onClick={() => setContributeOpen(false)} className="text-white hover:opacity-50 transition-opacity">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-8 space-y-6">
+              <div>
+                <label className="block text-xs font-black uppercase tracking-widest mb-2">Subject Name</label>
+                <input type="text" placeholder="E.g. Engineering Physics" className="w-full p-3 border-2 border-black font-bold uppercase text-sm focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-shadow" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest mb-2">Branch</label>
+                  <select className="w-full p-3 border-2 border-black font-bold uppercase text-sm focus:outline-none">
+                    <option>CSE</option>
+                    <option>ECE</option>
+                    <option>ME</option>
+                    <option>CE</option>
+                    <option>IT</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest mb-2">Year</label>
+                  <select className="w-full p-3 border-2 border-black font-bold uppercase text-sm focus:outline-none">
+                    <option>1st Year</option>
+                    <option>2nd Year</option>
+                    <option>3rd Year</option>
+                    <option>4th Year</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-black uppercase tracking-widest mb-2">Type</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {['End Sem', 'TA1', 'TA2'].map(t => (
+                    <label key={t} className="border-2 border-black p-2 flex items-center justify-center cursor-pointer hover:bg-black hover:text-white transition-colors font-bold uppercase text-xs">
+                      <input type="radio" name="paperType" className="hidden" />
+                      {t}
+                    </label>
                   ))}
                 </div>
               </div>
-            </div>
 
-            {/* Modal Footer */}
-            <div className="bg-white border-t-4 border-black p-4 flex items-center justify-between">
-              <div className="flex gap-4">
-                <button className="px-4 py-2 border-4 border-black font-black uppercase text-xs hover:bg-gray-100">[← PREV PAGE]</button>
-                <button className="px-4 py-2 border-4 border-black font-black uppercase text-xs hover:bg-gray-100">[NEXT PAGE →]</button>
+              <div className="border-2 border-dashed border-gray-300 p-8 text-center hover:border-black hover:bg-gray-50 transition-colors cursor-pointer group">
+                <CloudUpload size={40} className="mx-auto mb-2 text-gray-300 group-hover:text-black transition-colors" />
+                <p className="text-xs font-bold uppercase text-gray-400 group-hover:text-black">Drag PDF here or click to browse</p>
               </div>
-              <button
-                onClick={() => { alert('AI Test Generation Initiated!'); setSelectedPaper(null); }}
-                className="bg-black text-white px-8 py-2 border-4 border-black font-black uppercase text-xs hover:bg-gray-800"
-              >
-                GENERATE AI MOCK TEST 🤖
+
+              <button className="w-full bg-black text-white py-4 font-black uppercase tracking-widest hover:bg-gray-900 transition-colors flex items-center justify-center gap-2" onClick={() => { alert('Thank you! Your contribution has been submitted for review.'); setContributeOpen(false); }}>
+                Submit for Review
               </button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </div >
   );
 };
 
@@ -595,43 +718,31 @@ const DashboardView: React.FC<{
   const playClick = useSound();
 
   // Local state for profile selection
-  const [tempBranch, setTempBranch] = useState(profile.branch);
-  const [tempYear, setTempYear] = useState(profile.year);
-  const [tempSemester, setTempSemester] = useState(profile.semester);
-  const [configOpen, setConfigOpen] = useState(false);
+  // Ensure temp values are initialized from profile or defaults
+  const [tempBranch, setTempBranch] = useState(profile.branch || 'CSE');
+  const [tempYear, setTempYear] = useState(profile.year === '1' ? '1ST YEAR' : profile.year === '2' ? '2ND YEAR' : profile.year === '3' ? '3RD YEAR' : profile.year === '4' ? '4TH YEAR' : '1ST YEAR');
 
-  const handleApplyProfile = () => {
-    playClick();
+  const handleGlobalFilterChange = (newBranch: string, newYear: string) => {
+    // Convert readable year back to number string for profile/logic
+    const yearNum = newYear === '1ST YEAR' ? '1' : newYear === '2ND YEAR' ? '2' : newYear === '3RD YEAR' ? '3' : '4';
+
     onProfileUpdate({
       ...profile,
-      branch: tempBranch,
-      year: tempYear,
-      semester: tempSemester
+      branch: newBranch,
+      year: yearNum
     });
-    setConfigOpen(false);
   };
 
   const branches = ['CSE', 'ECE', 'ME', 'CE', 'IT'];
   const years = ['1ST YEAR', '2ND YEAR', '3RD YEAR', '4TH YEAR'];
 
-  const getSemestersForYear = (year: string) => {
-    switch (year) {
-      case '1ST YEAR': return ['S1', 'S2'];
-      case '2ND YEAR': return ['S3', 'S4'];
-      case '3RD YEAR': return ['S5', 'S6'];
-      case '4TH YEAR': return ['S7', 'S8'];
-      default: return ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8'];
-    }
-  };
-
-  const availableSemesters = getSemestersForYear(tempYear);
-
+  // Effect to sync local state if profile changes externally
   useEffect(() => {
-    const validSemesters = getSemestersForYear(tempYear);
-    if (!validSemesters.includes(tempSemester)) {
-      setTempSemester(validSemesters[0]);
-    }
-  }, [tempYear]);
+    setTempBranch(profile.branch || 'CSE');
+    setTempYear(profile.year === '1' ? '1ST YEAR' : profile.year === '2' ? '2ND YEAR' : profile.year === '3' ? '3RD YEAR' : profile.year === '4' ? '4TH YEAR' : '1ST YEAR');
+  }, [profile]);
+
+
 
   return (
     <div className="min-h-screen bg-gray-50/50 pt-20">
@@ -667,35 +778,36 @@ const DashboardView: React.FC<{
             </div>
           </div>
 
-          <div className="flex items-center gap-2 w-full md:w-auto bg-gray-50 p-2 border-2 border-dashed border-gray-300 hover:border-black hover:border-solid transition-all duration-300">
-            <div className="flex items-center gap-2 px-2 text-[10px] font-black uppercase tracking-widest text-gray-400">
-              <span className="hidden md:inline">SYSTEM CONFIG</span>
-              <div className="h-4 w-px bg-gray-300"></div>
+          <div className="flex gap-4 items-center">
+            <div className="bg-white text-black px-4 py-2 border-2 border-black flex items-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all">
+              <span className="text-[10px] font-black uppercase tracking-widest">BRANCH:</span>
+              <select
+                value={tempBranch}
+                onChange={(e) => setTempBranch(e.target.value)}
+                className="font-bold text-sm uppercase bg-transparent outline-none cursor-pointer"
+              >
+                {branches.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
             </div>
-
-            {configOpen ? (
-              <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right duration-200 px-2">
-                <select value={tempBranch} onChange={e => setTempBranch(e.target.value)} className="bg-white border-2 border-black text-xs font-bold uppercase p-1 outline-none cursor-pointer hover:bg-yellow-100">
-                  {branches.map(b => <option key={b} value={b}>{b}</option>)}
-                </select>
-                <select value={tempYear} onChange={e => setTempYear(e.target.value)} className="bg-white border-2 border-black text-xs font-bold uppercase p-1 outline-none cursor-pointer hover:bg-yellow-100">
-                  {years.map(y => <option key={y} value={y}>{y}</option>)}
-                </select>
-                <select value={tempSemester} onChange={e => setTempSemester(e.target.value)} className="bg-white border-2 border-black text-xs font-bold uppercase p-1 outline-none cursor-pointer hover:bg-yellow-100">
-                  {availableSemesters.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-                <button onClick={handleApplyProfile} className="bg-black text-white p-1.5 border-2 border-black hover:bg-white hover:text-black transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none"><CheckCircle2 size={14} /></button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-4 cursor-pointer px-4 py-1.5 hover:bg-white transition-all group" onClick={() => setConfigOpen(true)}>
-                <span className="font-black text-sm uppercase underline decoration-2 underline-offset-4 decoration-gray-300 group-hover:decoration-black">{profile.branch}</span>
-                <span className="text-gray-300">/</span>
-                <span className="font-black text-sm uppercase underline decoration-2 underline-offset-4 decoration-gray-300 group-hover:decoration-black">{profile.year}</span>
-                <span className="text-gray-300">/</span>
-                <span className="font-black text-sm uppercase underline decoration-2 underline-offset-4 decoration-gray-300 group-hover:decoration-black">{profile.semester}</span>
-                <Edit2 size={12} className="opacity-40 group-hover:opacity-100 ml-2 transition-opacity" />
-              </div>
-            )}
+            <div className="bg-white text-black px-4 py-2 border-2 border-black flex items-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all">
+              <span className="text-[10px] font-black uppercase tracking-widest">YEAR:</span>
+              <select
+                value={tempYear}
+                onChange={(e) => setTempYear(e.target.value)}
+                className="font-bold text-sm uppercase bg-transparent outline-none cursor-pointer"
+              >
+                {years.map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </div>
+            <button
+              onClick={() => {
+                playClick();
+                handleGlobalFilterChange(tempBranch, tempYear);
+              }}
+              className="bg-black text-white px-6 py-2 border-2 border-black font-black uppercase tracking-widest hover:bg-white hover:text-black transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1"
+            >
+              GO
+            </button>
           </div>
         </div>
 
@@ -709,7 +821,7 @@ const DashboardView: React.FC<{
           >
             {/* Badge */}
             <div className="w-fit">
-              <div className="bg-[#FFC900] text-black border-2 border-black px-3 py-1 text-xs font-black uppercase tracking-widest">
+              <div className="bg-black text-white border-2 border-black px-3 py-1 text-xs font-black uppercase tracking-widest group-hover:bg-white group-hover:text-black transition-colors">
                 CORE ARCHIVE
               </div>
             </div>
