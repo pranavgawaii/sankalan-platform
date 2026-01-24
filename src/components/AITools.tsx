@@ -139,7 +139,7 @@ const FeatureRequestModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
     );
 };
 
-const AITools: React.FC = () => {
+const AITools: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const playClick = useSound();
     const [showKeyModal, setShowKeyModal] = React.useState(false);
     const [showFeatureModal, setShowFeatureModal] = React.useState(false);
@@ -196,6 +196,13 @@ const AITools: React.FC = () => {
 
     return (
         <div className="container mx-auto max-w-6xl">
+            {/* Back Button */}
+            <button
+                onClick={() => { playClick(); onBack?.(); }}
+                className="flex items-center gap-2 mb-8 text-gray-500 hover:text-black font-bold uppercase text-xs transition-colors"
+            >
+                <ArrowRight size={16} className="rotate-180" /> Back to Career
+            </button>
             <div className="mb-12 text-center">
                 <div className="inline-block bg-black text-white px-4 py-1 mb-4 border-2 border-black transform -rotate-2">
                     <span className="font-black uppercase tracking-widest text-xs flex items-center gap-2">

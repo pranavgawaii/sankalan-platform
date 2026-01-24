@@ -1,0 +1,571 @@
+{
+    "categories": [
+        {
+            "id": "dsa",
+            "title": "DSA Mastery",
+            "description": "Master Data Structures & Algorithms in your preferred language.",
+            "icon": "🧩",
+            "colorFrom": "#3B82F6",
+            "colorTo": "#1E40AF",
+            "featuredSheets": [
+                {
+                    "id": "strivers-a2z-dsa",
+                    "title": "Striver's A2Z DSA Sheet",
+                    "subtitle": "Complete DSA Roadmap - Beginner to Advanced",
+                    "creator": "Raj Vikramaditya (Striver)",
+                    "icon": "🎯",
+                    "badge": "RECOMMENDED",
+                    "tags": [
+                        "FREE",
+                        "450+ Problems",
+                        "Video Solutions"
+                    ],
+                    "description": "The most comprehensive DSA sheet covering all topics from basics to advanced. Includes video explanations, articles, and practice problems for each concept.",
+                    "features": [
+                        "450+ Curated Problems",
+                        "FREE YouTube Video Solutions",
+                        "Topic-wise structured learning",
+                        "Articles & Detailed Explanations",
+                        "Beginner Friendly Approach",
+                        "Interview-Ready Preparation"
+                    ],
+                    "stats": {
+                        "problemCount": "450+",
+                        "videoCount": "450+",
+                        "studentsPlaced": "10,000+",
+                        "placementRate": "90%",
+                        "avgRating": 4.9
+                    },
+                    "externalLink": "https://takeuforward.org/strivers-a2z-dsa-course-sheet-2",
+                    "introVideoLink": "https://www.youtube.com/watch?v=0bHoB32fuj0",
+                    "highlightColor": "#FF6B6B",
+                    "companies": [
+                        "Google",
+                        "Amazon",
+                        "Microsoft",
+                        "Facebook",
+                        "Apple"
+                    ]
+                },
+                {
+                    "id": "strivers-sde-sheet",
+                    "title": "Striver's SDE Sheet",
+                    "subtitle": "Top 180 Coding Interview Problems",
+                    "creator": "Raj Vikramaditya (Striver)",
+                    "icon": "🚀",
+                    "badge": "INTERVIEW PREP",
+                    "tags": [
+                        "FREE",
+                        "180+ Problems",
+                        "FAANG Ready"
+                    ],
+                    "description": "Curated list of 180 must-do problems for Software Development Engineer interviews. Focus on company-wise patterns and frequently asked questions.",
+                    "features": [
+                        "180+ Must-Do Problems",
+                        "Company-Wise Pattern Analysis",
+                        "FAANG Level Problems",
+                        "Video Explanations for All",
+                        "Interview-Ready Solutions",
+                        "Optimal Approach Discussions"
+                    ],
+                    "stats": {
+                        "problemCount": "180+",
+                        "videoCount": "180+",
+                        "companies": "50+",
+                        "avgRating": 4.9
+                    },
+                    "externalLink": "https://takeuforward.org/interviews/strivers-sde-sheet-top-coding-interview-problems",
+                    "introVideoLink": "https://www.youtube.com/watch?v=WNtzUR_MwUQ",
+                    "highlightColor": "#4F46E5",
+                    "companies": [
+                        "Amazon",
+                        "Google",
+                        "Microsoft",
+                        "Uber",
+                        "Netflix"
+                    ]
+                }
+            ],
+            "roadmaps": [
+                {
+                    "id": "java-basics",
+                    "title": "Java Basics",
+                    "icon": "☕",
+                    "description": "Perfect for absolute beginners. Master Java fundamentals in 4 weeks.",
+                    "difficulty": "Beginner",
+                    "duration": "4 weeks",
+                    "topicCount": 25,
+                    "phases": [
+                        {
+                            "phaseId": 1,
+                            "phaseName": "Fundamentals",
+                            "topics": []
+                        },
+                        {
+                            "phaseId": 2,
+                            "phaseName": "OOP Concepts",
+                            "topics": []
+                        }
+                    ]
+                },
+                {
+                    "id": "cpp-basics",
+                    "title": "C++ Basics",
+                    "icon": "🔷",
+                    "description": "Learn C++ from scratch. The language of choice for Competitive Programming.",
+                    "difficulty": "Beginner",
+                    "duration": "4 weeks",
+                    "topicCount": 25,
+                    "phases": [
+                        {
+                            "phaseId": 1,
+                            "phaseName": "Fundamentals",
+                            "topics": []
+                        },
+                        {
+                            "phaseId": 2,
+                            "phaseName": "Memory Management",
+                            "topics": []
+                        }
+                    ]
+                },
+                {
+                    "id": "python-basics",
+                    "title": "Python Basics",
+                    "icon": "🐍",
+                    "description": "The easiest way to start coding. Clean syntax and powerful libraries.",
+                    "difficulty": "Beginner",
+                    "duration": "3 weeks",
+                    "topicCount": 20,
+                    "phases": [
+                        {
+                            "phaseId": 1,
+                            "phaseName": "Python Syntax",
+                            "topics": []
+                        },
+                        {
+                            "phaseId": 2,
+                            "phaseName": "Advanced Basics",
+                            "topics": []
+                        }
+                    ]
+                },
+                {
+                    "id": "java-dsa",
+                    "title": "Java DSA Complete",
+                    "icon": "☕",
+                    "description": "Complete Data Structures & Algorithms path using Java.",
+                    "difficulty": "Intermediate",
+                    "duration": "4-6 months",
+                    "topicCount": 45,
+                    "phases": [
+                        {
+                            "phaseId": 1,
+                            "phaseName": "Java Fundamentals",
+                            "topics": [
+                                {
+                                    "topicId": "java-basics",
+                                    "name": "Basics",
+                                    "title": "Java Syntax & Basics",
+                                    "description": "Variables, Data Types, Operators, and Control Flow.",
+                                    "difficulty": "Easy",
+                                    "estimatedHours": 10,
+                                    "keyPoints": [
+                                        "JVM, JRE, JDK",
+                                        "Data Types",
+                                        "Loops & Conditionals"
+                                    ],
+                                    "resources": [],
+                                    "color": "#10B981"
+                                },
+                                {
+                                    "topicId": "java-oop",
+                                    "name": "OOP",
+                                    "title": "Object Oriented Programming",
+                                    "description": "Classes, Objects, Inheritance, Polymorphism, Encapsulation.",
+                                    "difficulty": "Medium",
+                                    "estimatedHours": 15,
+                                    "keyPoints": [
+                                        "Classes & Objects",
+                                        "Inheritance",
+                                        "Polymorphism",
+                                        "Abstraction"
+                                    ],
+                                    "resources": [],
+                                    "color": "#3B82F6"
+                                }
+                            ]
+                        },
+                        {
+                            "phaseId": 2,
+                            "phaseName": "Core Data Structures",
+                            "topics": [
+                                {
+                                    "topicId": "arrays",
+                                    "name": "Arrays",
+                                    "title": "Arrays & Strings",
+                                    "description": "Fundamental linear data structures.",
+                                    "difficulty": "Medium",
+                                    "estimatedHours": 20,
+                                    "keyPoints": [
+                                        "1D & 2D Arrays",
+                                        "String Manipulation",
+                                        "Sliding Window"
+                                    ],
+                                    "resources": [],
+                                    "color": "#3B82F6"
+                                },
+                                {
+                                    "topicId": "linked-list",
+                                    "name": "Linked Lists",
+                                    "title": "Linked Lists",
+                                    "description": "Singly, Doubly, and Circular Linked Lists.",
+                                    "difficulty": "Medium",
+                                    "estimatedHours": 15,
+                                    "keyPoints": [
+                                        "Traversal",
+                                        "Insertion/Deletion",
+                                        "Cycle Detection"
+                                    ],
+                                    "resources": [],
+                                    "color": "#3B82F6"
+                                }
+                            ]
+                        },
+                        {
+                            "phaseId": 3,
+                            "phaseName": "Advanced Algorithms",
+                            "topics": [
+                                {
+                                    "topicId": "dp",
+                                    "name": "DP",
+                                    "title": "Dynamic Programming",
+                                    "description": "Solving complex problems by breaking them down.",
+                                    "difficulty": "Advanced",
+                                    "estimatedHours": 30,
+                                    "keyPoints": [
+                                        "Memoization",
+                                        "Tabulation",
+                                        "Knapsack Pattern"
+                                    ],
+                                    "resources": [],
+                                    "color": "#EF4444"
+                                },
+                                {
+                                    "topicId": "graphs",
+                                    "name": "Graphs",
+                                    "title": "Graph Algorithms",
+                                    "description": "BFS, DFS, Shortest Path, MST.",
+                                    "difficulty": "Advanced",
+                                    "estimatedHours": 25,
+                                    "keyPoints": [
+                                        "BFS/DFS",
+                                        "Dijkstra",
+                                        "Topology Sort"
+                                    ],
+                                    "resources": [],
+                                    "color": "#EF4444"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "id": "cpp-dsa",
+                    "title": "C++ DSA Complete",
+                    "icon": "🚀",
+                    "description": "Standard Template Library (STL) and high-performance algorithms.",
+                    "difficulty": "Intermediate",
+                    "duration": "4-6 months",
+                    "topicCount": 42,
+                    "phases": [
+                        {
+                            "phaseId": 1,
+                            "phaseName": "C++ Basics",
+                            "topics": [
+                                {
+                                    "topicId": "cpp-stl",
+                                    "name": "STL",
+                                    "title": "Standard Template Library",
+                                    "description": "Vectors, Maps, Sets, and Algorithms.",
+                                    "difficulty": "Medium",
+                                    "estimatedHours": 20,
+                                    "keyPoints": [
+                                        "Vectors",
+                                        "Maps",
+                                        "Sets",
+                                        "Sort"
+                                    ],
+                                    "resources": [],
+                                    "color": "#3B82F6"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "id": "python-dsa",
+                    "title": "Python DSA Complete",
+                    "icon": "🐍",
+                    "description": "Clean syntax and powerful libraries for interview prep.",
+                    "difficulty": "Beginner",
+                    "duration": "3-5 months",
+                    "topicCount": 38,
+                    "phases": [
+                        {
+                            "phaseId": 1,
+                            "phaseName": "Python Core",
+                            "topics": [
+                                {
+                                    "topicId": "py-syntax",
+                                    "name": "Pythonic Code",
+                                    "title": "Python Syntax & Philosophy",
+                                    "description": "List comprehensions, Lambda functions, and modules.",
+                                    "difficulty": "Easy",
+                                    "estimatedHours": 10,
+                                    "keyPoints": [
+                                        "List Comprehensions",
+                                        "Generators",
+                                        "Decorators"
+                                    ],
+                                    "resources": [],
+                                    "color": "#10B981"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "development",
+            "title": "Development",
+            "description": "Build real-world applications. Web, Mobile, and Backend.",
+            "icon": "💻",
+            "colorFrom": "#8B5CF6",
+            "colorTo": "#6D28D9",
+            "roadmaps": [
+                {
+                    "id": "frontend",
+                    "title": "Frontend Dev",
+                    "icon": "🎨",
+                    "description": "HTML, CSS, JS, and React to build modern UIs.",
+                    "difficulty": "Intermediate",
+                    "duration": "3-5 months",
+                    "topicCount": 35,
+                    "phases": [
+                        {
+                            "phaseId": 1,
+                            "phaseName": "Fundamentals",
+                            "topics": [
+                                {
+                                    "topicId": "html-css",
+                                    "name": "HTML/CSS",
+                                    "title": "HTML5 & CSS3",
+                                    "description": "The building blocks of the web.",
+                                    "difficulty": "Easy",
+                                    "estimatedHours": 20,
+                                    "keyPoints": [
+                                        "Semantic HTML",
+                                        "Flexbox",
+                                        "Grid",
+                                        "Responsiveness"
+                                    ],
+                                    "resources": [],
+                                    "color": "#10B981"
+                                },
+                                {
+                                    "topicId": "js-dom",
+                                    "name": "JS & DOM",
+                                    "title": "JavaScript DOM",
+                                    "description": "Making pages interactive.",
+                                    "difficulty": "Medium",
+                                    "estimatedHours": 25,
+                                    "keyPoints": [
+                                        "DOM Manipulation",
+                                        "Events",
+                                        "Fetch API"
+                                    ],
+                                    "resources": [],
+                                    "color": "#3B82F6"
+                                }
+                            ]
+                        },
+                        {
+                            "phaseId": 2,
+                            "phaseName": "Frameworks",
+                            "topics": [
+                                {
+                                    "topicId": "react-core",
+                                    "name": "React",
+                                    "title": "React.js Core",
+                                    "description": "Component-based UI development.",
+                                    "difficulty": "Medium",
+                                    "estimatedHours": 40,
+                                    "keyPoints": [
+                                        "Components",
+                                        "Hooks",
+                                        "State Management",
+                                        "Router"
+                                    ],
+                                    "resources": [],
+                                    "color": "#3B82F6"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "id": "backend",
+                    "title": "Backend Dev",
+                    "icon": "⚙️",
+                    "description": "Server-side logic, APIs, and Databases.",
+                    "difficulty": "Advanced",
+                    "duration": "4-6 months",
+                    "topicCount": 40,
+                    "phases": [
+                        {
+                            "phaseId": 1,
+                            "phaseName": "Server Basics",
+                            "topics": [
+                                {
+                                    "topicId": "nodejs",
+                                    "name": "Node.js",
+                                    "title": "Node.js Runtime",
+                                    "description": "JavaScript on the server.",
+                                    "difficulty": "Medium",
+                                    "estimatedHours": 20,
+                                    "keyPoints": [
+                                        "Event Loop",
+                                        "Modules",
+                                        "File System",
+                                        "HTTP"
+                                    ],
+                                    "resources": [],
+                                    "color": "#3B82F6"
+                                },
+                                {
+                                    "topicId": "express",
+                                    "name": "Express",
+                                    "title": "Express.js Framework",
+                                    "description": "Building REST APIs.",
+                                    "difficulty": "Medium",
+                                    "estimatedHours": 20,
+                                    "keyPoints": [
+                                        "Routing",
+                                        "Middleware",
+                                        "REST Principles"
+                                    ],
+                                    "resources": [],
+                                    "color": "#3B82F6"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "id": "fullstack",
+                    "title": "Full Stack",
+                    "icon": "📶",
+                    "description": "End-to-end development mastery.",
+                    "difficulty": "Advanced",
+                    "duration": "6-8 months",
+                    "topicCount": 60,
+                    "phases": []
+                },
+                {
+                    "id": "android",
+                    "title": "Android Dev",
+                    "icon": "📱",
+                    "description": "Build mobile apps with Kotlin.",
+                    "difficulty": "Intermediate",
+                    "duration": "4-6 months",
+                    "topicCount": 45,
+                    "phases": []
+                },
+                {
+                    "id": "dbms",
+                    "title": "DBMS Expert",
+                    "icon": "🗄️",
+                    "description": "Deep dive into Database Management Systems.",
+                    "difficulty": "Advanced",
+                    "duration": "2-3 months",
+                    "topicCount": 25,
+                    "phases": []
+                }
+            ]
+        },
+        {
+            "id": "placement",
+            "title": "Placement Prep",
+            "description": "Career-focused roadmaps for interviews and aptitude.",
+            "icon": "💼",
+            "colorFrom": "#10B981",
+            "colorTo": "#059669",
+            "roadmaps": [
+                {
+                    "id": "complete-placement",
+                    "title": "Placement 101",
+                    "icon": "🎯",
+                    "description": "Resume, Aptitude, HR, and Technical prep combined.",
+                    "difficulty": "Intermediate",
+                    "duration": "3-4 months",
+                    "topicCount": 50,
+                    "phases": [
+                        {
+                            "phaseId": 1,
+                            "phaseName": "Getting Started",
+                            "topics": [
+                                {
+                                    "topicId": "resume",
+                                    "name": "Resume",
+                                    "title": "Resume Building",
+                                    "description": "Crafting an ATS-friendly resume.",
+                                    "difficulty": "Easy",
+                                    "estimatedHours": 5,
+                                    "keyPoints": [
+                                        "Formatting",
+                                        "Action Verbs",
+                                        "Project showcasing"
+                                    ],
+                                    "resources": [],
+                                    "color": "#10B981"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "id": "interview-prep",
+                    "title": "Interview Prep",
+                    "icon": "🗣️",
+                    "description": "DSA patterns, System Design, and Behavioral questions.",
+                    "difficulty": "Advanced",
+                    "duration": "2-3 months",
+                    "topicCount": 30,
+                    "phases": []
+                },
+                {
+                    "id": "cp",
+                    "title": "Competitive Programming",
+                    "icon": "🏆",
+                    "description": "From beginner to Codeforces Specialist.",
+                    "difficulty": "Advanced",
+                    "duration": "Ongoing",
+                    "topicCount": 100,
+                    "phases": []
+                },
+                {
+                    "id": "core-cs",
+                    "title": "Core CS",
+                    "icon": "📚",
+                    "description": "OS, DBMS, Networks, and OOP for interviews.",
+                    "difficulty": "Medium",
+                    "duration": "2 months",
+                    "topicCount": 20,
+                    "phases": []
+                }
+            ]
+        }
+    ]
+}

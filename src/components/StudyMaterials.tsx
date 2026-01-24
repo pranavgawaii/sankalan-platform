@@ -16,6 +16,7 @@ import {
     RefreshCw,
     Edit2,
     ArrowRight,
+    ArrowLeft,
     ExternalLink
 } from 'lucide-react';
 import useSound from '../hooks/useSound';
@@ -254,7 +255,7 @@ const AISummaryModal: React.FC<{ material: StudyMaterial | null; onClose: () => 
 };
 
 // --- Main Component ---
-const StudyMaterials: React.FC<{ profile?: UserProfile; onProfileUpdate?: (profile: UserProfile) => void }> = ({ profile, onProfileUpdate }) => {
+const StudyMaterials: React.FC<{ profile?: UserProfile; onProfileUpdate?: (profile: UserProfile) => void; onBack?: () => void }> = ({ profile, onProfileUpdate, onBack }) => {
     const [selectedSubject, setSelectedSubject] = useState('ML');
     const [selectedYear, setSelectedYear] = useState(profile?.year || '3RD YEAR');
     const [selectedSemester, setSelectedSemester] = useState(profile?.semester || 'S5');
@@ -345,6 +346,14 @@ const StudyMaterials: React.FC<{ profile?: UserProfile; onProfileUpdate?: (profi
     return (
         <div className="min-h-screen bg-dots pt-24 pb-20 px-4">
             <div className="container mx-auto max-w-5xl">
+
+                {/* Back Button */}
+                <button
+                    onClick={() => { playClick(); onBack?.(); }}
+                    className="flex items-center gap-2 mb-6 text-gray-500 hover:text-black font-bold uppercase text-xs transition-colors"
+                >
+                    <ArrowLeft size={16} /> Back to Academics
+                </button>
 
                 {/* Page Header */}
                 <div className="mb-10">

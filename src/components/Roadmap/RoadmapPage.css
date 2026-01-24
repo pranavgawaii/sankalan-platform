@@ -1,0 +1,112 @@
+/* Roadmap Page Container */
+.roadmap-container {
+    min-height: 100vh;
+    background-color: #F3F4F6;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Landing Page Grid */
+.roadmap-landing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Roadmap Visualization Layout */
+.roadmap-viz-layout {
+    display: flex;
+    height: calc(100vh - 80px);
+    /* Adjust for App Navbar */
+    overflow: hidden;
+    position: relative;
+}
+
+.roadmap-left-panel {
+    flex: 1;
+    /* Takes remaining space if details panel is closed, or shares it */
+    background-color: #F9FAFB;
+    overflow-y: auto;
+    padding: 2rem;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.roadmap-right-panel {
+    width: 400px;
+    background-color: white;
+    border-left: 1px solid #E5E7EB;
+    overflow-y: auto;
+    box-shadow: -4px 0 15px rgba(0, 0, 0, 0.05);
+    position: relative;
+    height: 100%;
+    z-index: 10;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .roadmap-viz-layout {
+        flex-direction: column;
+        height: auto;
+        overflow-y: auto;
+    }
+
+    .roadmap-right-panel {
+        width: 100%;
+        height: auto;
+        border-left: none;
+        border-top: 1px solid #E5E7EB;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        max-height: 80vh;
+        border-top-left-radius: 16px;
+        border-top-right-radius: 16px;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    }
+}
+
+/* Node Styling */
+.roadmap-node {
+    width: 200px;
+    padding: 1rem;
+    background: white;
+    border: 2px solid #E5E7EB;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.roadmap-node:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.roadmap-node.active {
+    border-color: #000;
+    background-color: #F3F4F6;
+}
+
+/* Difficulty Colors handled in JS via inline styles usually, but classes here too */
+.node-daisy {
+    border-color: #10B981;
+}
+
+.node-medium {
+    border-color: #3B82F6;
+}
+
+.node-hard {
+    border-color: #EF4444;
+}
+
+/* Connecting Lines */
+.roadmap-connector-line {
+    position: absolute;
+    width: 2px;
+    background-color: #E5E7EB;
+    z-index: 0;
+}

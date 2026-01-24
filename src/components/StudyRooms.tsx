@@ -221,9 +221,10 @@ interface StudyRoomsProps {
     onCreateRoom: (room: any) => void;
     onJoinRoom: (roomId: string) => void;
     onDeleteRoom?: (roomId: string) => void; // Optional for now to avoid breaking App.tsx if currently missing
+    onBack?: () => void;
 }
 
-const StudyRooms: React.FC<StudyRoomsProps> = ({ rooms, onCreateRoom, onJoinRoom, onDeleteRoom }) => {
+const StudyRooms: React.FC<StudyRoomsProps> = ({ rooms, onCreateRoom, onJoinRoom, onDeleteRoom, onBack }) => {
     const playClick = useSound();
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showJoinInput, setShowJoinInput] = useState(false);
@@ -238,6 +239,14 @@ const StudyRooms: React.FC<StudyRoomsProps> = ({ rooms, onCreateRoom, onJoinRoom
     return (
         <div className="min-h-screen bg-dots pt-24 pb-20 px-4">
             <div className="container mx-auto max-w-6xl">
+
+                {/* Back Button */}
+                <button
+                    onClick={() => { playClick(); onBack?.(); }}
+                    className="flex items-center gap-2 mb-8 text-black/60 hover:text-black font-bold uppercase text-xs transition-colors"
+                >
+                    <ArrowRight size={16} className="rotate-180" /> Back to Community
+                </button>
 
                 {/* Header */}
                 <div className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-6">

@@ -45,7 +45,8 @@ import {
 
   Edit2,
   Upload,
-  CloudUpload
+  CloudUpload,
+  Shield
 } from 'lucide-react';
 import { useSoundContext } from './src/context/SoundContext';
 
@@ -58,15 +59,28 @@ import Profile from './src/components/Profile';
 import Settings from './src/components/Settings';
 import StudyRooms from './src/components/StudyRooms';
 import LiveRoom from './src/components/LiveRoom';
+import RoadmapPage from './src/components/Roadmap/RoadmapPage';
 import useSound from './src/hooks/useSound';
 import { useIntersectionObserver, useCountUp } from './src/hooks/useLandingAnimations';
 import Loader from './src/components/Loader';
 import DashboardLoader from './src/components/DashboardLoader';
 import { useStudyMaterials } from './src/hooks/useStudyMaterials';
 import { trackDownload, trackView } from './src/lib/firestoreService';
+import DashboardPage from './src/components/DashboardPage';
+import AcademicsLanding from './src/components/AcademicsLanding';
+import CodeArenaLanding from './src/components/CodeArenaLanding';
+import CareerLanding from './src/components/CareerLanding';
+import CommunityLanding from './src/components/CommunityLanding';
+import CalendarPage from './src/components/CalendarPage';
+import CampusEvents from './src/components/CampusEvents';
+import ClubLogin from './src/components/club/ClubLogin';
+import ClubDashboard from './src/components/club/ClubDashboard';
+import CoordinatorDashboard from './src/components/admin/SuperAdminDashboard';
+import AdminPortal from './src/components/admin/AdminPortal';
+import EventsAdminLogin from './src/components/admin/EventsAdminLogin';
 
 // --- Types ---
-type View = 'landing' | 'auth' | 'onboarding' | 'dashboard' | 'pyqs' | 'materials' | 'tools' | 'about' | 'profile' | 'settings' | 'study-rooms' | 'live-room' | 'admin-dashboard';
+type View = 'landing' | 'auth' | 'onboarding' | 'dashboard' | 'pyqs' | 'materials' | 'tools' | 'pathways' | 'about' | 'profile' | 'settings' | 'study-rooms' | 'live-room' | 'admin-dashboard' | 'academics' | 'code-arena' | 'career' | 'community' | 'calendar' | 'campus-events' | 'club-login' | 'club-dashboard' | 'coordinator-dashboard' | 'admin-portal' | 'events-admin-login';
 type AuthMode = 'signin' | 'signup' | 'admin-login';
 
 interface UserProfile {
@@ -138,6 +152,8 @@ const WindowBox: React.FC<{ title?: string; children: React.ReactNode; className
   </div>
 );
 
+import ModernNavbar from './src/components/ModernNavbar';
+
 // --- Sub-Components for Dashboard/PYQ Shared Navigation ---
 
 const AppNav: React.FC<{
@@ -149,84 +165,19 @@ const AppNav: React.FC<{
   setNotifOpen: (v: boolean) => void;
   profileOpen: boolean;
   setProfileOpen: (v: boolean) => void;
-}> = ({ profile, onLogout, currentView, setView, notifOpen, setNotifOpen, profileOpen, setProfileOpen }) => {
-  const playClick = useSound();
-  const { isMuted, toggleMute } = useSoundContext();
+}> = ({ profile, onLogout, currentView, setView, notifOpen, setNotifOpen }) => {
+  const initials = profile.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b-4 border-black py-2">
-      <div className="container mx-auto px-4 flex items-center justify-between">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView('dashboard')}>
-          <GraduationCap className="w-8 h-8" strokeWidth={3} />
-          <span className="text-3xl font-black uppercase tracking-tighter">SANKALAN</span>
-        </div>
-
-        <div className="hidden lg:flex items-center gap-2">
-          {[
-            { id: 'dashboard', label: 'DASHBOARD' },
-            { id: 'pyqs', label: 'PYQS' },
-            { id: 'materials', label: 'MATERIALS' },
-            { id: 'tools', label: 'AI TOOLS' },
-            { id: 'study-rooms', label: 'STUDY ROOMS' },
-            { id: 'about', label: 'ABOUT' }
-          ].map((item) => (
-            <button
-              key={item.id}
-              onClick={() => { playClick(); (item.id === 'dashboard' || item.id === 'pyqs' || item.id === 'materials' || item.id === 'tools' || item.id === 'study-rooms' || item.id === 'about') && setView(item.id as View); }}
-              className={`px-4 py-1 font-bold text-xs uppercase transition-colors border-2 border-transparent hover:border-black active:bg-black active:text-white ${currentView === item.id ? 'bg-black text-white' : ''}`}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-4 relative">
-          <button
-            onClick={() => { playClick(); toggleMute(); }}
-            className="p-2 border-2 border-black hover:bg-gray-100 transition-colors relative"
-            title={isMuted ? "Unmute" : "Mute"}
-          >
-            {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
-          </button>
-
-          <button
-            onClick={() => setNotifOpen(!notifOpen)}
-            className="p-2 border-2 border-black hover:bg-gray-100 transition-colors relative"
-          >
-            <Bell size={20} />
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-600 border-2 border-black"></div>
-          </button>
-
-          <button
-            onClick={() => { playClick(); setProfileOpen(!profileOpen); }}
-            className="flex items-center gap-2 p-2 border-2 border-black hover:bg-gray-100 active:bg-black active:text-white transition-colors select-none"
-          >
-            <span className="text-xs font-black uppercase hidden md:inline cursor-pointer">{profile.name}</span>
-            <User size={20} />
-          </button>
-
-          {profileOpen && (
-            <div className="absolute top-full right-0 mt-2 w-48 bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] z-50">
-              <button
-                className="w-full text-left p-3 text-xs font-black uppercase hover:bg-gray-100 active:bg-black active:text-white border-b-2 border-black flex items-center gap-2"
-                onClick={() => { playClick(); setView('profile'); setProfileOpen(false); }}
-              >
-                <User size={14} /> View Profile
-              </button>
-              <button
-                className="w-full text-left p-3 text-xs font-black uppercase hover:bg-gray-100 active:bg-black active:text-white border-b-2 border-black flex items-center gap-2"
-                onClick={() => { playClick(); setView('settings'); setProfileOpen(false); }}
-              >
-                <Monitor size={14} /> Settings
-              </button>
-              <button className="w-full text-left p-3 text-xs font-black uppercase hover:bg-red-50 text-red-600 flex items-center gap-2" onClick={onLogout}>
-                <LogOut size={14} /> Sign Out
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </nav>
+    <ModernNavbar
+      onNavigate={(viewId) => setView(viewId as View)}
+      currentPath={currentView}
+      userName={profile.name}
+      userInitials={initials}
+      hasNotifications={true}
+      onNotificationClick={() => setNotifOpen(!notifOpen)}
+      onLogout={onLogout}
+    />
   );
 };
 
@@ -714,7 +665,11 @@ const DashboardView: React.FC<{
   onProfileUpdate: (profile: UserProfile) => void;
 }> = ({ profile, onLogout, setView, onProfileUpdate }) => {
   const [notifOpen, setNotifOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false); // Global Profile State
+
+
+
+  // --- Sound Effects ---
   const playClick = useSound();
 
   // Local state for profile selection
@@ -1102,7 +1057,7 @@ const OnboardingPage: React.FC<{ onComplete: (profile: Partial<UserProfile>) => 
 
 // --- Auth Component ---
 
-const AuthPage: React.FC<{ mode: AuthMode; setMode: (mode: AuthMode) => void; onSuccess: () => void; onAdminAuth: () => void }> = ({ mode, setMode, onSuccess, onAdminAuth }) => {
+const AuthPage: React.FC<{ mode: AuthMode; setMode: (mode: AuthMode) => void; onSuccess: () => void; onAdminAuth: () => void; onClubAuth: () => void; onAdminPortal: () => void }> = ({ mode, setMode, onSuccess, onAdminAuth, onClubAuth, onAdminPortal }) => {
   const [email, setEmail] = useState(''); // Kept for consistency if needed later, though Clerk handles student auth
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -1244,8 +1199,8 @@ const AuthPage: React.FC<{ mode: AuthMode; setMode: (mode: AuthMode) => void; on
                     <span>New user?</span>
                     <button onClick={() => setMode('signup')} className="font-black hover:underline">Create Account</button>
                   </div>
-                  <button onClick={() => setMode('admin-login')} className="flex items-center gap-1 text-gray-400 hover:text-black transition-colors">
-                    <Lock size={10} /> Admin Login
+                  <button onClick={onAdminPortal} className="flex items-center gap-1 text-gray-400 hover:text-black transition-colors">
+                    <Lock size={10} /> Admin Portal
                   </button>
                 </div>
               </>
@@ -1300,7 +1255,7 @@ const AuthPage: React.FC<{ mode: AuthMode; setMode: (mode: AuthMode) => void; on
 
 // --- Landing Page Sections ---
 
-const Navbar: React.FC<{ onAuth: (mode: AuthMode) => void; isAuthPage?: boolean; isOnboarding?: boolean; onBack: () => void }> = ({ onAuth, isAuthPage, isOnboarding, onBack }) => {
+const Navbar: React.FC<{ onAuth: (mode: AuthMode) => void; isAuthPage?: boolean; isOnboarding?: boolean; onBack: () => void; onAdminClick: () => void }> = ({ onAuth, isAuthPage, isOnboarding, onBack, onAdminClick }) => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b-4 border-black py-2">
       <div className="container mx-auto px-4 flex items-center justify-between">
@@ -1315,6 +1270,9 @@ const Navbar: React.FC<{ onAuth: (mode: AuthMode) => void; isAuthPage?: boolean;
                 {item}
               </button>
             ))}
+            <button onClick={onAdminClick} className="text-sm font-bold uppercase hover:bg-black hover:text-white px-2 py-1 transition-colors text-gray-500">
+              Admin
+            </button>
           </div>
         )}
         <div className="flex items-center gap-3">
@@ -1490,7 +1448,16 @@ const HeroSection: React.FC<{ onAuth: (mode: AuthMode) => void; onDemo: () => vo
 
         </div>
       </div>
-    </section>
+
+      {/* Admin Portal Quick Link */}
+      <a
+        onClick={(e) => { e.preventDefault(); onAuth('admin-login'); }}
+        href="/admin-portal"
+        className="absolute bottom-4 right-4 text-sm text-gray-400 hover:text-black transition flex items-center gap-2 font-bold uppercase tracking-widest z-50 cursor-pointer"
+      >
+        👨‍💼 Admin Portal →
+      </a>
+    </section >
   );
 };
 
@@ -1822,6 +1789,8 @@ const Footer: React.FC = () => (
 );
 
 export default function App() {
+  // Club Portal State
+  const [clubId, setClubId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true); // Custom loader active for initial load
   const [isNavigating, setIsNavigating] = useState(false); // Quick loader for dashboard navigation
   const { isLoaded, isSignedIn, user } = useUser();
@@ -1842,6 +1811,26 @@ export default function App() {
 
   const [globalProfileOpen, setGlobalProfileOpen] = useState(false);
   const [globalNotifOpen, setGlobalNotifOpen] = useState(false);
+
+  // Handle Browser Back Button & Initial Load
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state && event.state.view) {
+        setView(event.state.view);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+
+    // Initial URL Routing
+    const path = window.location.pathname;
+    if (path === '/admin-portal') setView('admin-portal');
+    else if (path === '/dashboard') setView('dashboard');
+    else if (path === '/academics') setView('academics');
+    else if (path === '/club-login') setView('club-login');
+    else if (path === '/events-admin-login') setView('events-admin-login');
+
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Study Rooms State
   const [activeRoom, setActiveRoom] = useState<any>(null);
@@ -2002,11 +1991,19 @@ export default function App() {
     window.scrollTo(0, 0);
   };
 
+
+
   const handleSetView = (v: View) => {
     // Only trigger loader for major view changes (e.g. going to dashboard, pyqs, materials)
     // and only if we are already in a "logged in" context (dashboard-like views)
     const dashboardViews = ['dashboard', 'pyqs', 'materials', 'tools', 'about', 'profile', 'settings', 'study-rooms'];
     const isInternalNav = dashboardViews.includes(view) && dashboardViews.includes(v);
+
+    // Update History State (so back button works)
+    if (v !== view || window.location.pathname !== `/${v}`) {
+      const path = v === 'landing' ? '/' : `/${v}`;
+      window.history.pushState({ view: v }, '', path);
+    }
 
     if (isInternalNav && v !== view) {
       setIsNavigating(true);
@@ -2053,7 +2050,9 @@ export default function App() {
           onAuth={navigateToAuth}
           isAuthPage={view === 'auth'}
           isOnboarding={view === 'onboarding'}
+
           onBack={navigateToLanding}
+          onAdminClick={() => setView('admin-portal')}
         />
       )}
 
@@ -2099,6 +2098,11 @@ export default function App() {
             setMode={setAuthMode}
             onSuccess={handleAuthSuccess}
             onAdminAuth={handleAdminAuth}
+            onClubAuth={() => {
+              setClubId(null);
+              setView('club-login');
+            }}
+            onAdminPortal={() => setView('admin-portal')}
           />
           <Footer />
         </>
@@ -2111,12 +2115,90 @@ export default function App() {
         </>
       )}
 
+
+
       {view === 'dashboard' && (
-        <DashboardView profile={profile} onLogout={handleLogout} setView={handleSetView} onProfileUpdate={handleProfileUpdate} />
+        <div className="min-h-screen bg-[#F5F5F5]">
+          <AppNav
+            profile={profile}
+            onLogout={handleLogout}
+            currentView="dashboard"
+            setView={handleSetView}
+            notifOpen={globalNotifOpen}
+            setNotifOpen={setGlobalNotifOpen}
+            profileOpen={globalProfileOpen}
+            setProfileOpen={setGlobalProfileOpen}
+          />
+          <DashboardPage userName={profile.name} onNavigate={handleSetView} />
+        </div>
+      )}
+
+      {view === 'academics' && (
+        <div className="min-h-screen bg-white pt-20">
+          <AppNav
+            profile={profile}
+            onLogout={handleLogout}
+            currentView="academics"
+            setView={handleSetView}
+            notifOpen={globalNotifOpen}
+            setNotifOpen={setGlobalNotifOpen}
+            profileOpen={globalProfileOpen}
+            setProfileOpen={setGlobalProfileOpen}
+          />
+          <AcademicsLanding onNavigate={handleSetView} />
+        </div>
+      )}
+
+      {view === 'code-arena' && (
+        <div className="min-h-screen bg-white pt-20">
+          <AppNav
+            profile={profile}
+            onLogout={handleLogout}
+            currentView="code-arena"
+            setView={handleSetView}
+            notifOpen={globalNotifOpen}
+            setNotifOpen={setGlobalNotifOpen}
+            profileOpen={globalProfileOpen}
+            setProfileOpen={setGlobalProfileOpen}
+          />
+          <CodeArenaLanding onNavigate={handleSetView} />
+        </div>
+      )}
+
+      {view === 'career' && (
+        <div className="min-h-screen bg-white pt-20">
+          <AppNav
+            profile={profile}
+            onLogout={handleLogout}
+            currentView="career"
+            setView={handleSetView}
+            notifOpen={globalNotifOpen}
+            setNotifOpen={setGlobalNotifOpen}
+            profileOpen={globalProfileOpen}
+            setProfileOpen={setGlobalProfileOpen}
+          />
+          <CareerLanding onNavigate={handleSetView} />
+        </div>
+      )}
+
+      {view === 'community' && (
+        <div className="min-h-screen bg-white pt-20">
+          <AppNav
+            profile={profile}
+            onLogout={handleLogout}
+            currentView="community"
+            setView={handleSetView}
+            notifOpen={globalNotifOpen}
+            setNotifOpen={setGlobalNotifOpen}
+            profileOpen={globalProfileOpen}
+            setProfileOpen={setGlobalProfileOpen}
+          />
+          <CommunityLanding onNavigate={handleSetView} />
+        </div>
       )}
 
       {view === 'pyqs' && (
-        <PYQBrowseView profile={profile} onLogout={handleLogout} setView={handleSetView} />
+        <PYQBrowseView profile={profile} onLogout={handleLogout} setView={handleSetView} onBack={() => handleSetView('academics')} />
       )}
 
 
@@ -2134,7 +2216,7 @@ export default function App() {
           />
           {/* Main content wrapper */}
           <div className="p-4">
-            <StudyMaterials profile={profile} onProfileUpdate={handleProfileUpdate} />
+            <StudyMaterials profile={profile} onProfileUpdate={handleProfileUpdate} onBack={() => handleSetView('academics')} />
           </div>
         </div>
       )}
@@ -2152,7 +2234,25 @@ export default function App() {
             setProfileOpen={setGlobalProfileOpen}
           />
           <div className="py-12 px-4">
-            <AITools />
+            <AITools onBack={() => handleSetView('career')} />
+          </div>
+        </div>
+      )}
+
+      {view === 'pathways' && (
+        <div className="min-h-screen bg-[#F5F5F5] pt-20">
+          <AppNav
+            profile={profile}
+            onLogout={handleLogout}
+            currentView="pathways"
+            setView={handleSetView}
+            notifOpen={globalNotifOpen}
+            setNotifOpen={setGlobalNotifOpen}
+            profileOpen={globalProfileOpen}
+            setProfileOpen={setGlobalProfileOpen}
+          />
+          <div className="h-[calc(100vh-80px)]">
+            <RoadmapPage onBack={() => handleSetView('career')} />
           </div>
         </div>
       )}
@@ -2223,7 +2323,7 @@ export default function App() {
             profileOpen={globalProfileOpen}
             setProfileOpen={setGlobalProfileOpen}
           />
-          <StudyRooms rooms={rooms} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} onDeleteRoom={handleDeleteRoom} />
+          <StudyRooms rooms={rooms} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} onDeleteRoom={handleDeleteRoom} onBack={() => handleSetView('community')} />
         </div>
       )}
 
@@ -2231,8 +2331,87 @@ export default function App() {
         <LiveRoom roomData={activeRoom} onLeave={handleLeaveRoom} />
       )}
 
+      {view === 'calendar' && (
+        <div className="min-h-screen bg-[#F5F5F5] pt-20">
+          <AppNav
+            profile={profile}
+            onLogout={handleLogout}
+            currentView="calendar"
+            setView={handleSetView}
+            notifOpen={globalNotifOpen}
+            setNotifOpen={setGlobalNotifOpen}
+            profileOpen={globalProfileOpen}
+            setProfileOpen={setGlobalProfileOpen}
+          />
+          <CalendarPage />
+        </div>
+      )}
+
+      {view === 'campus-events' && (
+        <div className="min-h-screen bg-[#F5F5F5] pt-20">
+          <AppNav
+            profile={profile}
+            onLogout={handleLogout}
+            currentView="dashboard"
+            setView={handleSetView}
+            notifOpen={globalNotifOpen}
+            setNotifOpen={setGlobalNotifOpen}
+            profileOpen={globalProfileOpen}
+            setProfileOpen={setGlobalProfileOpen}
+          />
+          <CampusEvents onBack={() => handleSetView('dashboard')} />
+        </div>
+      )}
+
+      {view === 'club-login' && (
+        <ClubLogin onLogin={(id) => {
+          if (id === 'COORDINATOR_ACCESS') {
+            setView('coordinator-dashboard');
+          } else {
+            setClubId(id);
+            setView('club-dashboard');
+          }
+        }} />
+      )}
+
+      {view === 'coordinator-dashboard' && (
+        <CoordinatorDashboard onLogout={() => setView('landing')} />
+      )}
+
+      {view === 'club-dashboard' && clubId && (
+        <ClubDashboard
+          clubId={clubId}
+          onLogout={() => {
+            setClubId(null);
+            setView('landing');
+          }}
+        />
+      )}
+
       {view === 'admin-dashboard' && (
         <AdminDashboard onLogout={handleLogout} />
+      )}
+
+      {view === 'admin-portal' && (
+        <AdminPortal
+          onBack={() => setView('landing')}
+          onSelectAcademics={() => {
+            setAuthMode('admin-login');
+            setView('auth');
+          }}
+          onSelectEvents={() => setView('events-admin-login')}
+        />
+      )}
+
+      {view === 'events-admin-login' && (
+        <EventsAdminLogin
+          onBack={() => setView('admin-portal')}
+          onCoordinatorLogin={() => setView('coordinator-dashboard')}
+          onClubLogin={(clubId) => {
+            setClubId(clubId);
+            setView('club-dashboard');
+          }}
+        />
       )}
       <Analytics />
     </div>
